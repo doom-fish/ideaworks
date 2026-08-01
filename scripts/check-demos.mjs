@@ -91,7 +91,9 @@ try {
     `flat metal wooden wood thin long thick hard soft small large round strip piece side edge
      single structure whose part parts made person people thing things way ways
      weight shape size colour texture object material something anything nothing
-     idea ideas answer answers word words problem start begin`.split(/\s+/),
+     idea ideas answer answers word words problem start begin
+     point pick whole arrive solution time give take make come work turn keep
+     look feel find know need want use used using`.split(/\s+/),
   )
 
   // Crude but sufficient stemming: without it "forests have firebreaks" in the
@@ -175,6 +177,46 @@ try {
             problems.push(
               `cra example gives away item ${item.cues.join('/')} → ${item.answer}`,
             )
+      }
+    }
+  }
+
+  /*
+   * The catalog is not the only place a prompt's answer can leak. The Generic
+   * Parts runner hardcoded the placeholder "e.g. thin flexible string of
+   * twisted fibre" — a candle's wick, while a candle sits in its own object
+   * bank — and because that string lived in a component rather than in a
+   * phase, checking the catalog alone could never have seen it.
+   */
+  const componentDir = 'src/components'
+  const literal = /(?:'([^'\n]{18,})'|"([^"\n]{18,})"|`([^`$\n]{18,})`)/g
+  for (const file of readdirSync(componentDir).filter((f) => f.endsWith('.tsx'))) {
+    const source = readFileSync(join(componentDir, file), 'utf8')
+    for (const m of source.matchAll(literal)) {
+      const text = m[1] ?? m[2] ?? m[3]
+      /*
+       * Only prose can leak an answer. Class lists dominate these files and
+       * share words like "line" and "panel" with the prompt banks purely
+       * because those are colour tokens, so they are filtered out by the one
+       * reliable difference: written English contains function words and
+       * Tailwind never does.
+       */
+      if (/[/:[\]]/.test(text)) continue
+      const tokens = text.toLowerCase().split(/\s+/)
+      if (!tokens.some((t) => STOP.has(t.replace(/[^a-z]/g, '')))) continue
+      const words = keywords(text)
+      if (words.size < 3) continue
+      for (const ex of EXERCISES) {
+        for (const p of ex.prompts) {
+          const bank = [...Object.values(p.data ?? {}), ...(p.props ?? []), ...(p.cliches ?? [])]
+            .filter((v) => typeof v === 'string')
+            .join(' ')
+          const shared = [...keywords(bank)].filter((w) => words.has(w))
+          if (shared.length >= 2)
+            problems.push(
+              `${file} contains "${text.slice(0, 60)}" which gives away ${ex.id} prompt "${p.key}": ${shared.join(', ')}`,
+            )
+        }
       }
     }
   }
