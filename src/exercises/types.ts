@@ -27,9 +27,55 @@ export interface Nudge {
   text: string
 }
 
-export interface Stage {
+/**
+ * A phase of a session.
+ *
+ * Exercises that ask you to change stance mid-session — sabotage then invert,
+ * or answer as three different people — used to do it with a timed toast that
+ * vanished after nine seconds. Nothing actually changed, so nothing actually
+ * switched. A phase is an explicit, acknowledged transition: the task line, the
+ * input, the button verb and the scoring all change together.
+ */
+export interface Phase {
+  /** short name shown in the phase pill, e.g. "Sabotage" */
   label: string
-  instruction: string
+  /** the task, stated plainly and imperatively — this is what you are doing now */
+  task: string
+  /** one line on how to do it well; shown under the task */
+  hint?: string
+  placeholder: string
+  /** verb on the commit button, e.g. "Add failure" */
+  verb: string
+  /** shown when the list is empty */
+  empty: string
+  /**
+   * generate  — free entry until you advance
+   * transform — walks the previous phase's entries one at a time, asking for a
+   *             response to each. This is what makes "now invert them" real.
+   */
+  kind: 'generate' | 'transform'
+  /** for transform phases: how each source entry is introduced */
+  sourceLabel?: string
+  /** entries required before this phase can be left */
+  min?: number
+  /**
+   * Whether this phase's entries are what gets scored. Scaffolding phases —
+   * deliberately bad ideas, or an abstract restatement of a mechanism — are
+   * kept in the record but must not be scored for originality against the task.
+   */
+  scored: boolean
+}
+
+/** How the prompt itself is laid out, so each exercise reads as its own task. */
+export interface PromptLayout {
+  /** label above the subject, e.g. "Object", "The complaint" */
+  subjectLabel: string
+  /** key in prompt.data to surface in its own block */
+  extraKey?: string
+  /** label for that block, e.g. "Constraint", "Source system" */
+  extraLabel?: string
+  /** styling of the extra block */
+  extraTone?: 'constraint' | 'source'
 }
 
 export interface Prompt {
@@ -66,11 +112,14 @@ export interface Exercise {
   quota?: number
   /** timed nudges surfaced mid-session */
   nudges?: Nudge[]
-  /** rotating sub-instructions that split the session */
-  stages?: Stage[]
+  /** explicit phases; a single-phase exercise still uses this for its copy */
+  phases: Phase[]
+  /** how the prompt is presented */
+  layout: PromptLayout
   /** ask the user to label a category per idea, and ban repeats */
   requiresCategory?: boolean
   prompts: Prompt[]
+  /** used for scoring context, not for display */
   promptTemplate: (p: Prompt) => string
   howTo: string[]
 }

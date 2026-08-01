@@ -189,7 +189,13 @@ export default function App() {
     if (!exercise || !prompt) return
     const ex = exercise
     const pr = prompt
-    const plain = ideas.map((i) => ({ text: i.text, atMs: i.atMs }))
+    // Only scored entries are graded. Scaffolding phases — the deliberately
+    // terrible ideas in Reverse Brainstorm, the abstract mechanism in Far-Domain
+    // Analogy — would otherwise be judged as if they were proposed solutions,
+    // which is both wrong and demoralising.
+    const scored = ideas.filter((i) => i.scored)
+    const plain = scored.map((i) => ({ text: i.text, atMs: i.atMs, source: i.source }))
+    const all = ideas.map((i) => ({ text: i.text, atMs: i.atMs, source: i.source }))
     runScoring(plain.map((p) => p.text), async () => {
       const res =
         ex.scoring === 'pairwise'
@@ -200,7 +206,7 @@ export default function App() {
               pr.cliches ?? [],
               pr.props ?? [],
             )
-      setLastId(await save(ex, pr, plain, res.metrics, durationMs))
+      setLastId(await save(ex, pr, all, res.metrics, durationMs))
       setResult({ exercise: ex, ideas: res.ideas, metrics: res.metrics })
       goToResult(ex, res.ideas.length)
     })
@@ -426,10 +432,18 @@ export default function App() {
   if (view === 'run' && exercise && prompt) {
     const quit = () => setView('home')
     if (exercise.kind === 'dat')
-      return <DatRunner seconds={exercise.seconds} onFinish={finishDat} onQuit={quit} />
+      return (
+        <DatRunner
+          phase={exercise.phases[0]}
+          seconds={exercise.seconds}
+          onFinish={finishDat}
+          onQuit={quit}
+        />
+      )
     if (exercise.kind === 'chain')
       return (
         <ChainRunner
+          phase={exercise.phases[0]}
           seed={prompt.label}
           seconds={exercise.seconds}
           length={exercise.quota ?? 8}
@@ -440,6 +454,7 @@ export default function App() {
     if (exercise.kind === 'decompose')
       return (
         <DecomposeRunner
+          phase={exercise.phases[0]}
           prompt={prompt}
           seconds={exercise.seconds}
           quota={exercise.quota ?? 6}
@@ -460,6 +475,7 @@ export default function App() {
     return (
       <RatRunner
         key={craIdx}
+        phase={exercise!.phases[0]}
         cues={item.cues}
         answer={item.answer}
         seconds={exercise!.seconds}
@@ -519,8 +535,42 @@ export default function App() {
           <h2 className="text-3xl font-semibold tracking-tight">{exercise.name}</h2>
           <p className="text-muted">{exercise.trains}</p>
 
+          {/* Show the actual task and, where there is one, the shape of the
+              session. Multi-phase exercises change what you are doing partway
+              through, and being told that up front is the difference between a
+              deliberate switch and a confusing one. */}
           <Panel className="p-5">
-            <div className="text-[10px] uppercase tracking-[.14em] text-muted">How to play</div>
+            <div className="text-[10px] uppercase tracking-[.14em] text-muted">
+              {exercise.phases.length > 1
+                ? `What you'll do · ${exercise.phases.length} phases`
+                : 'What you\'ll do'}
+            </div>
+            <ol className="mt-3 space-y-3">
+              {exercise.phases.map((ph, i) => (
+                <li key={ph.label} className="flex gap-3">
+                  <span
+                    className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-semibold ${
+                      i === 0 ? 'bg-accent text-white' : 'bg-panel2 text-muted'
+                    }`}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm leading-relaxed text-fg">{ph.task}</p>
+                    {ph.hint && <p className="mt-0.5 text-xs leading-relaxed text-muted">{ph.hint}</p>}
+                    {!ph.scored && (
+                      <span className="mt-1 inline-block text-[11px] text-muted/80">
+                        setup for the next phase — not scored
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+
+          <Panel className="p-5">
+            <div className="text-[10px] uppercase tracking-[.14em] text-muted">Good to know</div>
             <ul className="mt-3 space-y-2">
               {exercise.howTo.map((h) => (
                 <li key={h} className="flex gap-2.5 text-sm leading-relaxed">
@@ -672,7 +722,7 @@ function Shell({
   ]
   return (
     <div className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-10 border-b border-line/60 bg-ink/70 backdrop-blur-md">
+      <header className="sticky top-0 z-20 border-b border-line/60 bg-ink/90 backdrop-blur-md supports-[backdrop-filter]:bg-ink/70">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <button onClick={() => setView('home')} className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-accent to-accent2 text-sm font-bold text-ink">

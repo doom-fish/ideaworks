@@ -4,6 +4,12 @@ export interface IdeaRecord {
   text: string
   /** ms since session start — needed for the serial-order effect analysis */
   atMs: number
+  /**
+   * For entries written in a transform phase: the earlier entry this responds
+   * to. An inversion is relevant to the failure it inverts, not to the original
+   * problem statement, so this is what its relevance is judged against.
+   */
+  source?: string
   /** per-idea semantic distance from the prompt (SemDis-style) */
   distance?: number
 }

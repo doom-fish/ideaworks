@@ -107,6 +107,17 @@ export const RELEVANCE_USE = 0.45
 export const RELEVANCE_PROMPT = 0.1
 
 /**
+ * Relevance bar for a transform entry measured against its own source.
+ *
+ * Inverting "make every error message say something went wrong" into "name the
+ * exact file and line" is plainly on-task, yet it sits at 0.08 similarity to
+ * the original problem statement and 0.60 to the failure it inverts. Judging
+ * such an answer against the prompt marks good work as off-task, so transform
+ * entries are anchored to what they transform.
+ */
+export const RELEVANCE_SOURCE = 0.2
+
+/**
  * Distance to the nearest cliché below which a response is treated as a stock
  * answer.
  *

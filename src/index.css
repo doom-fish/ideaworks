@@ -13,19 +13,59 @@
   --color-danger: #ff5c7a;
 }
 
-html, body, #root { height: 100%; }
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/*
+ * The base colour lives on html so iOS rubber-band overscroll reveals the right
+ * colour instead of white when you pull past the top or bottom.
+ */
+html {
+  background-color: var(--color-ink);
+}
 
 body {
-  background:
-    radial-gradient(1100px 600px at 12% -10%, #1d1740 0%, transparent 60%),
-    radial-gradient(900px 520px at 92% 0%, #06342b 0%, transparent 55%),
-    var(--color-ink);
+  background-color: var(--color-ink);
   color: var(--color-fg);
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   /* Stop iOS inflating body text when the device is rotated. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/*
+ * The ambient gradient is a fixed layer rather than a background on <body>.
+ *
+ * On <body> it broke on phones for two reasons: body is height:100%, so the
+ * gradient painted only the first viewport and content scrolled past it into
+ * flat ink; and the blobs were sized in fixed pixels (1100px wide) which is
+ * nearly three times the width of a phone, so only a meaningless corner of the
+ * gradient was ever visible.
+ *
+ * Fixed positioning pins it to the visual viewport at any scroll offset, and
+ * viewport units make it scale to the device instead of being cropped.
+ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(110vw 55vh at 12% -8%, #1d1740 0%, transparent 60%),
+    radial-gradient(95vw 45vh at 92% 0%, #06342b 0%, transparent 55%);
+}
+
+@media (min-width: 640px) {
+  body::before {
+    background:
+      radial-gradient(1100px 600px at 12% -10%, #1d1740 0%, transparent 60%),
+      radial-gradient(900px 520px at 92% 0%, #06342b 0%, transparent 55%);
+  }
 }
 
 /*

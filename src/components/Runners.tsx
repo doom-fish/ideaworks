@@ -4,15 +4,17 @@ import { fmtClock, useTimer } from '../lib/useTimer'
 import { scoreChain } from '../engine/scoring'
 import { CHAIN_GOOD, CHAIN_WEAK } from '../engine/calibration'
 import { gradePart, type PartGrade } from '../data/genericParts'
-import type { Prompt } from '../exercises/types'
+import type { Phase, Prompt } from '../exercises/types'
 
 /* ------------------------------------------------------------------ DAT --- */
 
 export function DatRunner({
+  phase,
   seconds,
   onFinish,
   onQuit,
 }: {
+  phase: Phase
   seconds: number
   onFinish: (words: string[], durationMs: number) => void
   onQuit: () => void
@@ -54,13 +56,10 @@ export function DatRunner({
       </div>
 
       <Panel className="p-5">
-        <p className="text-lg leading-relaxed">
-          Enter <span className="text-accent2">10 nouns</span> that are as different from each
-          other as possible.
-        </p>
+        <p className="text-lg font-medium leading-snug">{phase.task}</p>
+        {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
         <p className="mt-2 text-sm text-muted">
-          Only single nouns. No proper nouns, no specialised jargon. Meaning is what counts, not
-          spelling.
+          Single common nouns only — no names, no jargon.
         </p>
       </Panel>
 
@@ -112,6 +111,7 @@ export function DatRunner({
 /* ------------------------------------------------------------------ CRA --- */
 
 export function RatRunner({
+  phase,
   cues,
   answer,
   seconds,
@@ -120,6 +120,7 @@ export function RatRunner({
   onResult,
   onQuit,
 }: {
+  phase: Phase
   cues: [string, string, string]
   answer: string
   seconds: number
@@ -192,6 +193,9 @@ export function RatRunner({
             </Button>
           </div>
         ) : (
+          /* enterKeyHint makes a phone keyboard show "go" instead of a generic
+             return key, and the explicit button below means you never have to
+             discover that Enter submits. */
           <div className="flex flex-col items-center gap-3">
             <input
               autoFocus
@@ -199,26 +203,30 @@ export function RatRunner({
               value={guess}
               onChange={(e) => setGuess(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submit()}
+              enterKeyHint="go"
               placeholder="the connecting word"
               className="w-full rounded-xl border border-line bg-panel2 px-4 py-3 text-center text-lg outline-none focus:border-accent"
             />
+            {/* Pressing Enter is invisible on a phone, so the commit is a real
+                button like every other exercise. */}
+            <Button className="w-full" onClick={submit} disabled={!guess.trim()}>
+              {wrong ? 'Not that one' : 'Submit answer'}
+            </Button>
             <div className="flex w-full items-center justify-between">
               <span className="font-mono text-sm tabular-nums text-muted">
                 {Math.ceil(remaining)}s
               </span>
               <button
                 onClick={() => setReveal(true)}
-                className="text-xs text-muted hover:text-fg"
+                className="text-xs text-muted underline hover:text-fg"
               >
-                give up
+                give up &amp; show answer
               </button>
             </div>
           </div>
         )}
       </Panel>
-      <p className="text-center text-[11px] text-muted">
-        The answer makes a compound word or common phrase with all three.
-      </p>
+      <p className="text-center text-[11px] leading-relaxed text-muted">{phase.hint}</p>
     </div>
   )
 }
@@ -226,12 +234,14 @@ export function RatRunner({
 /* -------------------------------------------------------- Generic Parts --- */
 
 export function DecomposeRunner({
+  phase,
   prompt,
   seconds,
   quota,
   onFinish,
   onQuit,
 }: {
+  phase: Phase
   prompt: Prompt
   seconds: number
   quota: number
@@ -282,13 +292,12 @@ export function DecomposeRunner({
       </div>
 
       <Panel className="p-5">
-        <p className="text-lg">
-          Break <span className="text-accent2">{prompt.label}</span> into parts.
-        </p>
-        <p className="mt-2 text-sm text-muted">
-          Describe each part using only shape and material. If your word implies a use, it is
-          holding you hostage — rename it.
-        </p>
+        <p className="text-lg font-medium leading-snug">{phase.task}</p>
+        {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+        <div className="mt-4 rounded-xl border border-line bg-panel2/50 p-3">
+          <div className="text-[10px] uppercase tracking-[.14em] text-muted">Object</div>
+          <p className="mt-1 text-base text-fg">{prompt.label}</p>
+        </div>
         {prompt.data?.hint ? (
           showHint ? (
             <p className="mt-3 rounded-lg border border-line bg-panel2/60 p-2 text-xs text-muted">
@@ -368,12 +377,14 @@ export function DecomposeRunner({
 /* -------------------------------------------------------- Semantic chain -- */
 
 export function ChainRunner({
+  phase,
   seed,
   seconds,
   length,
   onFinish,
   onQuit,
 }: {
+  phase: Phase
   seed: string
   seconds: number
   length: number
@@ -426,14 +437,8 @@ export function ChainRunner({
       </div>
 
       <Panel className="p-5">
-        <p className="text-lg">
-          Each new word must be as unrelated as possible to the{' '}
-          <span className="text-accent2">one before it</span>.
-        </p>
-        <p className="mt-2 text-sm text-muted">
-          Aim to keep every step above 0.80. Most people sag in the middle and start free
-          associating instead of jumping.
-        </p>
+        <p className="text-lg font-medium leading-snug">{phase.task}</p>
+        {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
       </Panel>
 
       <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-line bg-panel/40 p-4">

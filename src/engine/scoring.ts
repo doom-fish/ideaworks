@@ -6,6 +6,7 @@ import {
   ORIGINALITY_CEIL,
   ORIGINALITY_FLOOR,
   RELEVANCE_PROMPT,
+  RELEVANCE_SOURCE,
   RELEVANCE_PROP,
   RELEVANCE_USE,
   datBand,
@@ -67,6 +68,9 @@ export async function scoreDivergent(
   const [promptVec] = await embedder.embed([prompt])
   const clicheVecs = cliches.length ? await embedder.embed(cliches) : []
   const propVecs = props.length ? await embedder.embed(props) : []
+  // Transform entries are judged against what they transform, not the prompt.
+  const sources = ideas.map((i) => i.source ?? '')
+  const sourceVecs = sources.some(Boolean) ? await embedder.embed(sources) : []
 
   const scored: ScoredIdea[] = ideas.map((idea, i) => {
     const v = ideaVecs[i]
@@ -81,12 +85,19 @@ export async function scoreDivergent(
     // Objects carry a property bank and a known-use bank, which separate
     // on-task from off-task cleanly. Problem-style prompts have neither, so
     // they fall back to the prompt text with a deliberately lenient bar.
-    const grounded = propVecs.length > 0 || clicheVecs.length > 0
-    const onTask = grounded
-      ? simProp >= RELEVANCE_PROP || simUse >= RELEVANCE_USE
-      : simPrompt >= RELEVANCE_PROMPT
+    const simSource =
+      idea.source && sourceVecs[i] ? cosine(sourceVecs[i], v) : 0
 
-    const relevance = clamp01(Math.max(simProp, simUse, grounded ? 0 : simPrompt))
+    const grounded = propVecs.length > 0 || clicheVecs.length > 0
+    const onTask = idea.source
+      ? simSource >= RELEVANCE_SOURCE || simPrompt >= RELEVANCE_PROMPT
+      : grounded
+        ? simProp >= RELEVANCE_PROP || simUse >= RELEVANCE_USE
+        : simPrompt >= RELEVANCE_PROMPT
+
+    const relevance = clamp01(
+      Math.max(simProp, simUse, simSource, grounded && !idea.source ? 0 : simPrompt),
+    )
 
     // Novelty is only meaningful once the response is actually on-task.
     const novelty = clicheVecs.length
