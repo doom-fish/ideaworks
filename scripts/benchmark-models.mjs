@@ -25,7 +25,7 @@
  */
 import { pipeline } from '@huggingface/transformers'
 
-const CANDIDATES = [
+const CANDIDATES = process.env.MODELS ? process.env.MODELS.split(',') : [
   'Xenova/all-MiniLM-L6-v2',
   'Xenova/bge-small-en-v1.5',
   'Xenova/gte-small',
@@ -51,24 +51,24 @@ const OBJECTS = [
       'prop something up', 'use it as a weapon', 'make a path',
     ],
     items: [
-      ['build a wall', 1],
-      ['use it as a doorstop', 1],
-      ['break a window with it', 1],
-      ['use it as a paperweight', 1],
-      ['weigh down a tarpaulin', 2],
-      ['stack them as a bookshelf support', 2],
-      ['use it as a barbecue base', 2],
-      ['sharpen a blade on it', 2],
-      ['grind it to powder as a pigment for paint', 3],
-      ['heat it and use the stored warmth to prove bread dough', 3],
-      ['use its porosity as a slow-release water reservoir for a plant', 3],
-      ['carve channels in it to make a mould for casting metal', 3],
-      ['use it as a thermal mass to stabilise a beehive overnight', 3],
-      ['score it into a rasp for shaping green wood', 3],
+      ['lay them with mortar to build a garden wall', 1],
+      ['wedge one against the door to hold it open', 1],
+      ['throw it through the window to break the glass', 1],
+      ['rest it on the papers so they cannot blow away', 1],
+      ['set it down as a stand for a hot tray', 2],
+      ['stack a few to raise a shelf off the floor', 2],
+      ['balance a plank across two of them as a bench', 2],
+      ['drag a blade along its face to sharpen the edge', 2],
+      ['crush it to red dust and mix that into paint', 3],
+      ['warm it in the fire to prove dough overnight', 3],
+      ['soak it and bury it to water a plant slowly', 3],
+      ['cut a channel in it to cast molten metal', 3],
+      ['sink it in the hive to hold heat till morning', 3],
+      ['score its face into a rasp for shaping green wood', 3],
       ['idea alpha', 0],
       ['asdf asdf', 0],
-      ['I really enjoy eating pizza on Sundays', 0],
-      ['my sister lives in Copenhagen', 0],
+      ['I really enjoy eating pizza on Sundays with my family', 0],
+      ['my sister moved to Copenhagen to study marine biology', 0],
     ],
   },
   {
@@ -87,21 +87,21 @@ const OBJECTS = [
       'poke into a small opening',
     ],
     items: [
-      ['hold papers together', 1],
-      ['pick a lock with it', 1],
-      ['use it as a bookmark', 1],
-      ['make a chain of them', 1],
-      ['press the reset hole on a router', 2],
-      ['bend it into a phone stand', 2],
-      ['use it as a zip pull', 2],
-      ['hold a broken glasses arm together', 2],
-      ['use it as a seed marker that rusts to show soil moisture', 3],
-      ['straighten it as a probe for testing circuit continuity', 3],
-      ['use it as a tiny armature for a clay sculpture', 3],
-      ['bend it into a gauge for measuring wire thickness', 3],
-      ['use it as a depth stop when drilling', 3],
+      ['slide it over the corner to hold the sheets together', 1],
+      ['straighten it and rake the pins to pick a lock', 1],
+      ['slip it onto the page to mark where you stopped', 1],
+      ['link a row of them together to make a chain', 1],
+      ['poke the straightened end into the router reset hole', 2],
+      ['bend it into a cradle that props the phone up', 2],
+      ['hook it through the tab as a replacement zip pull', 2],
+      ['clamp it over the broken arm of the glasses', 2],
+      ['push it into soil as a marker that rusts when damp', 3],
+      ['straighten it into a probe for testing circuit continuity', 3],
+      ['bend it into an armature for a small clay figure', 3],
+      ['shape it into a gauge for measuring wire thickness', 3],
+      ['clip it to the bit as a depth stop when drilling', 3],
       ['the weather is nice today', 0],
-      ['quantum chromodynamics describes the strong force', 0],
+      ['quantum chromodynamics describes the strong nuclear force between quarks', 0],
       ['test test test', 0],
     ],
   },
@@ -121,18 +121,19 @@ const OBJECTS = [
       'break it for glass', 'use it as a piggy bank', 'use it as a weapon',
     ],
     items: [
-      ['hold a drink in it', 1],
-      ['use it as a vase for flowers', 1],
-      ['put it out for recycling', 1],
-      ['use it as a rolling pin', 2],
-      ['fill it with water as a bookend', 2],
-      ['cut it down into a drinking glass', 2],
-      ['use it as a lens to focus sunlight onto a seedling', 3],
+      ['pour a drink into it and put the cap back', 1],
+      ['fill it with water and stand cut flowers in it', 1],
+      ['rinse it out and put it in the recycling bin', 1],
+      ['roll it over the dough as an improvised rolling pin', 2],
+      ['fill it with sand so it holds the books upright', 2],
+      ['score and snap it to make a drinking glass', 2],
+      ['fill it with water so it focuses sun on a seedling', 3],
       ['tune a row of them with water to build a scale', 3],
-      ['bury it neck-down as a slow irrigation spike', 3],
+      ['bury it neck down so it waters the bed slowly', 3],
       ['use the punt as a mould for casting small pucks', 3],
       ['my sister lives in Copenhagen', 0],
       ['idea beta', 0],
+      ['the meeting has been moved to Thursday afternoon instead', 0],
     ],
   },
   {
@@ -151,19 +152,19 @@ const OBJECTS = [
       'use it as a rope', 'wear it as clothing',
     ],
     items: [
-      ['dry yourself after a shower', 1],
-      ['use it as a picnic blanket', 1],
-      ['mop up a spill', 1],
-      ['roll it up as a pillow', 2],
-      ['block a draught under the door', 2],
-      ['wrap a hot dish to keep it warm', 2],
-      ['freeze it damp as a moulded splint for a sprain', 3],
-      ['soak it in water as an evaporative cooler for a room', 3],
+      ['rub yourself down with it after getting out the shower', 1],
+      ['spread it on the grass and sit on it', 1],
+      ['throw it over the spill and press it down', 1],
+      ['roll it up tightly and rest your head on it', 2],
+      ['jam it along the gap to stop the draught', 2],
+      ['wrap the hot dish in it to keep the heat', 2],
+      ['freeze it damp so it sets into a rigid splint', 3],
+      ['soak it and hang it to cool the room by evaporation', 3],
       ['unravel the loops for cotton wicking in an oil lamp', 3],
-      ['stretch it as a coarse filter for straining plaster', 3],
+      ['stretch it taut as a coarse sieve for straining plaster', 3],
       ['idea gamma', 0],
       ['the train leaves at nine', 0],
-      ['photosynthesis converts light into sugar', 0],
+      ['photosynthesis converts sunlight into sugar inside the leaves of plants', 0],
     ],
   },
   {
@@ -182,18 +183,18 @@ const OBJECTS = [
       'make a wind spinner', 'use it as a pot rack',
     ],
     items: [
-      ['fit it to a bicycle', 1],
-      ['hang it on the wall as decoration', 1],
-      ['use it as a garden trellis', 1],
-      ['make a clock out of it', 2],
-      ['hang pots from the rim in a kitchen', 2],
-      ['use it as a cable spool', 2],
-      ['drive it as a slow turntable for drying painted parts', 3],
-      ['use the spoke tension as a coarse musical instrument', 3],
-      ['mount it as a centrifuge for separating honey from wax', 3],
-      ['use the rim as a bending form for steam-bent wood', 3],
+      ['bolt it back onto the forks of the bicycle', 1],
+      ['hang it flat on the wall as a decoration', 1],
+      ['lean it against the fence for beans to climb', 1],
+      ['fix hands to the hub and make it a clock', 2],
+      ['hang pans from the rim above the kitchen bench', 2],
+      ['wind cable around the rim to keep it tidy', 2],
+      ['spin it slowly to dry parts you have just painted', 3],
+      ['pluck the spokes at tension to sound a rough scale', 3],
+      ['spin it fast to fling honey out of the comb', 3],
+      ['bend steamed wood around the rim to set a curve', 3],
       ['asdf qwerty', 0],
-      ['I have a dentist appointment', 0],
+      ['I have a dentist appointment on Tuesday morning at ten', 0],
     ],
   },
 ]
@@ -202,6 +203,15 @@ const OBJECTS = [
 
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length
 const clamp01 = (x) => Math.max(0, Math.min(1, x))
+
+// Elaboration control, mirroring src/engine/calibration.ts. Automatic
+// originality scoring is confounded by response length (Domanti et al. 2026,
+// arXiv:2604.20569), so novelty is residualised against ln(word count).
+const ELAB_SLOPE = 0.0476
+const ELAB_MEAN_LN = 1.889
+const controlForElaboration = (nov, words) =>
+  words < 1 ? nov : nov - ELAB_SLOPE * (Math.log(words) - ELAB_MEAN_LN)
+const wordsIn = (t) => t.trim().split(/\s+/).filter(Boolean).length
 const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b)
   return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2
@@ -308,7 +318,10 @@ async function evaluate(modelId) {
         object: obj.name,
         simProp: Math.max(...propV.map((p) => cos(p, v))),
         simUse: Math.max(...clV.map((c) => cos(c, v))),
-        novelty: 0.62 * clamp01(dCliche / 0.9) + 0.38 * clamp01(dSelf / 0.9),
+        novelty: controlForElaboration(
+          0.62 * clamp01(dCliche / 0.9) + 0.38 * clamp01(dSelf / 0.9),
+          wordsIn(text),
+        ),
       })
     })
   }

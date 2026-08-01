@@ -72,19 +72,22 @@ export function datBand(raw: number): DatBand {
  *   middling        0.606 – 0.859  (median 0.676)
  *   genuinely novel 0.735 – 0.893  (median 0.768)
  *
- * Mapping [0.25, 0.91] onto [0, 100] yields this spread over the 71-item
- * labelled set, which separates the bands without saturating at either end:
- *   stock     median 10
- *   plausible median 55
- *   novel     median 78
+ * Fitted on a 72-item labelled set across 5 objects in which the bands are
+ * deliberately *length-matched* (mean 9.5 / 9.6 / 10.0 words). An earlier
+ * version of that set was not, and correlated r = .87 between band and word
+ * count — so a scorer could reach rho = .84 largely by counting words. On the
+ * corrected set the honest figures are:
+ *   stock     median 36
+ *   plausible median 56
+ *   novel     median 75
+ *   Spearman against the intended ordering: 0.62
  *
- * Spearman correlation with the intended ordering is 0.84. For reference,
- * models 4.6x larger (bge-base-en-v1.5, all-mpnet-base-v2 at 106 MB against
- * 23 MB) scored 0.82 and 0.76 on the same set — the bottleneck is the scoring
- * design, not the embedding model.
+ * For reference on the same corrected set, models 4.6x larger scored 0.64
+ * (bge-base-en-v1.5) and 0.61 (all-mpnet-base-v2) at 106 MB against 23 MB —
+ * within noise at this sample size, so the small model stays.
  */
-export const ORIGINALITY_FLOOR = 0.25
-export const ORIGINALITY_CEIL = 0.91
+export const ORIGINALITY_FLOOR = 0.401
+export const ORIGINALITY_CEIL = 0.83
 
 /**
  * Relevance gating.
@@ -126,6 +129,43 @@ export const RELEVANCE_PROMPT = 0.1
  * entries are anchored to what they transform.
  */
 export const RELEVANCE_SOURCE = 0.2
+
+/**
+ * Elaboration control.
+ *
+ * Automatic originality scoring is confounded by how elaborated a response is:
+ * the same idea written at length scores higher than the same idea written
+ * tersely, because a longer string sits further from the short entries in the
+ * cliché bank. Domanti, Mock, Agnoli & De Angeli (2026), "The Effect of Idea
+ * Elaboration on the Automatic Assessment of Idea Originality" (arXiv:2604.20569,
+ * doi:10.1145/3811427.3811453) found that the apparent self-preference bias of
+ * automatic raters disappeared once idea elaboration was controlled.
+ *
+ * Measured on this scorer over 45 responses — the same ideas written at three
+ * levels of elaboration across five objects — novelty correlated r = .20 with
+ * ln(word count). Before the correction the stock answer "build a wall" scored
+ * 0 while the same idea written out as "lay the bricks in a staggered bond with
+ * mortar between the courses to build a garden wall" scored 44, so padding an
+ * answer raised it by roughly 22 points on average.
+ *
+ * A first fit on 27 responses gave a slope of 0.10; at 45 it settles at 0.048,
+ * so the smaller sample was over-fitting and the correction it produced
+ * overshot. Refit with more data before trusting a change to this number.
+ *
+ * Novelty is therefore residualised against ln(words), which drives that
+ * correlation to r = .00. Elaboration is not discarded — it is reported as its
+ * own metric, which is where it belongs in Torrance-style scoring.
+ *
+ * Refit with `npm run calibrate` if the scoring blend changes.
+ */
+export const ELABORATION_SLOPE = 0.0476
+export const ELABORATION_MEAN_LN_WORDS = 1.889
+
+/** Remove the length component from a raw novelty value. */
+export function controlForElaboration(novelty: number, words: number): number {
+  if (words < 1) return novelty
+  return novelty - ELABORATION_SLOPE * (Math.log(words) - ELABORATION_MEAN_LN_WORDS)
+}
 
 /**
  * Distance to the nearest cliché below which a response is treated as a stock

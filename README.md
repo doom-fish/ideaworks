@@ -167,6 +167,32 @@ All seven text fields have spellcheck on. Autocorrect is split deliberately:
 Controls also render at 16px on touch devices, because Safari on iOS zooms the
 viewport for anything smaller and never zooms back out.
 
+### Elaboration is controlled for
+
+Automatic originality scoring is confounded by how *elaborated* a response is:
+the same idea written at length scores higher than the same idea written
+tersely, because a longer string sits further from the short entries in the
+cliché bank. Domanti, Mock, Agnoli & De Angeli (2026),
+[arXiv:2604.20569](https://arxiv.org/abs/2604.20569), found the apparent
+self-preference bias of automatic raters disappeared once elaboration was
+controlled.
+
+It was live here. Before the fix, "build a wall" scored 0 while the same idea
+padded to "lay the bricks in a staggered bond with mortar between the courses to
+build a garden wall" scored 44 — about +22 points on average for saying the same
+thing at length, which means verbosity gamed the score. Novelty is now
+residualised against ln(word count), cutting that to +9. Elaboration is still
+reported, as its own metric, which is where it belongs.
+
+### The benchmark was confounded too
+
+Worth recording because it nearly went unnoticed. The first labelled set
+correlated **r = .87** between band and word count — novel items averaged 10
+words, stock items 5 — so a scorer could reach rho = .84 largely by counting
+words. The set is now length-matched (9.5 / 9.6 / 10.0 words per band, r = .37),
+and the honest figure is **rho = .62**. The earlier number was mostly measuring
+the confound.
+
 ### Why this model
 
 The embedding model is the ceiling on scoring quality, so it was chosen by
@@ -176,16 +202,20 @@ Spearman correlation against the intended ordering:
 
 ```
 model                      dims   rho    stock  plaus  novel   gap   size
-all-MiniLM-L6-v2 (chosen)   384  0.837     10     55     78     68   23 MB
-bge-base-en-v1.5            768  0.816     16     65     87     71  106 MB
-bge-small-en-v1.5           384  0.800     17     55     70     53   34 MB
-gte-small                   384  0.776     20     59     79     59   34 MB
-all-mpnet-base-v2           768  0.759     19     58     70     51  106 MB
+bge-base-en-v1.5            768  0.636     36     61     72     36  106 MB
+all-MiniLM-L6-v2 (chosen)   384  0.624     36     56     75     39   23 MB
+all-mpnet-base-v2           768  0.609     29     55     69     40  106 MB
+bge-small-en-v1.5           384  0.507     34     54     65     31   34 MB
+gte-small                   384  0.435     47     61     68     21   34 MB
 ```
 
-Models 4.6x larger rank *worse*. The bottleneck was never the model — it was the
-relevance thresholds, which had been fitted to a much smaller set and were
-wrongly zeroing genuine answers. Thresholds are now swept per model with a
+Measured on the length-matched set with elaboration control applied. bge-base
+edges ahead by 0.012 rho for 4.6x the download — within noise at n=72, so the
+small model stays.
+
+The bottleneck was never the model — it was the relevance thresholds, which had
+been fitted to a much smaller set and were wrongly zeroing genuine answers.
+Thresholds are now swept per model with a
 precision-first rule: an operating point that flags a real idea as off-task is
 rejected outright, because a good idea scored zero teaches exactly the wrong
 lesson.

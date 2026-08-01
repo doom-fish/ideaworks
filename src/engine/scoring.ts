@@ -7,6 +7,7 @@ import {
   ORIGINALITY_FLOOR,
   RELEVANCE_PROMPT,
   RELEVANCE_SOURCE,
+  controlForElaboration,
   RELEVANCE_PROP,
   RELEVANCE_USE,
   datBand,
@@ -14,6 +15,7 @@ import {
 } from './calibration'
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0)
+const wordCount = (t: string) => t.trim().split(/\s+/).filter(Boolean).length
 const clamp01 = (x: number) => Math.max(0, Math.min(1, x))
 
 /** Map a raw blended distance onto the calibrated 0-100 originality scale. */
@@ -101,10 +103,12 @@ export async function scoreDivergent(
       Math.max(simProp, simUse, simSource, grounded && !idea.source ? 0 : simPrompt),
     )
 
-    // Novelty is only meaningful once the response is actually on-task.
-    const novelty = clicheVecs.length
+    // Novelty is only meaningful once the response is actually on-task, and is
+    // corrected for elaboration so that padding an idea out cannot raise it.
+    const rawNovelty = clicheVecs.length
       ? 0.62 * clamp01(dCliche / 0.9) + 0.38 * clamp01(dSelf / 0.9)
       : clamp01(dSelf / 0.9)
+    const novelty = controlForElaboration(rawNovelty, wordCount(idea.text))
 
     return {
       ...idea,
