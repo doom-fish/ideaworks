@@ -603,10 +603,28 @@ function ClicheReveal({ items, mode }: { items: ScoredIdea[]; mode: ScoreMode })
           The responses almost everyone gives for this prompt.
         </span>
       </div>
-      <ul className="mt-3 space-y-1">
+      {/*
+       * Each answer is shown against the specific bank entry it landed nearest,
+       * rather than against the bank as a whole. "This was stock" is a verdict
+       * you have to take on trust; "this was stock, and here is the worn phrase
+       * it sat next to" is evidence you can check and disagree with — and the
+       * disagreement is itself worth having, since the scorer is a moderate
+       * correlate of human judgement rather than an authority.
+       */}
+      <ul className="mt-3 space-y-2.5">
         {items.map((c, i) => (
-          <li key={i} className="text-sm text-muted line-through">
-            {c.text}
+          <li key={i} className="rounded-xl border border-line bg-panel2/40 p-3">
+            <p className="text-sm text-muted line-through">{c.text}</p>
+            {c.nearestCliche && (
+              <p className="mt-1.5 flex gap-2 text-xs leading-relaxed text-muted/80">
+                <span aria-hidden className="text-warn/70">
+                  ↳
+                </span>
+                <span>
+                  sat closest to <span className="text-warn/90">“{c.nearestCliche}”</span>
+                </span>
+              </p>
+            )}
           </li>
         ))}
       </ul>

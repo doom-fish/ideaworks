@@ -32,6 +32,17 @@ export interface ScoredIdea extends IdeaRecord {
   relevance: number
   /** distance to the nearest known cliché for this prompt (low = stereotyped) */
   dCliche: number
+  /**
+   * The stereotyped response this idea landed closest to, when the prompt has a
+   * bank at all.
+   *
+   * Telling someone their idea was stock is a verdict they have to take on
+   * trust. Showing them the specific worn phrasing it sat next to is evidence
+   * they can check, disagree with, and — the point of the exercise — recognise
+   * the pull of next time. It costs nothing to carry: the distance was already
+   * a minimum over the bank, so the winning entry was known and then discarded.
+   */
+  nearestCliche?: string
   /** distance to the nearest *other* idea in this session (low = self-repetition) */
   dSelf: number
   /** calibrated 0-100 originality; zero when the response is off-task */
@@ -80,12 +91,26 @@ export async function scoreDivergent(
 
   const scored: ScoredIdea[] = ideas.map((idea, i) => {
     const v = ideaVecs[i]
-    const dCliche = clicheVecs.length ? Math.min(...clicheVecs.map((c) => cosDist(c, v))) : 0.9
+    // An argmin rather than Math.min so the winning bank entry survives to the
+    // results screen, where naming it is what makes "this was stock" checkable
+    // instead of merely asserted. Similarity is read off the same pass rather
+    // than derived as 1 - dCliche, which would round-trip through subtraction
+    // twice for no reason.
+    let dCliche = 0.9
+    let simUse = 0
+    let nearestCliche: string | undefined
+    for (let k = 0; k < clicheVecs.length; k++) {
+      const sim = cosine(clicheVecs[k], v)
+      if (k === 0 || sim > simUse) {
+        simUse = sim
+        dCliche = 1 - sim
+        nearestCliche = cliches[k]
+      }
+    }
     const others = ideaVecs.filter((_, j) => j !== i)
     const dSelf = others.length ? Math.min(...others.map((o) => cosDist(o, v))) : 0.9
 
     const simProp = propVecs.length ? Math.max(...propVecs.map((p) => cosine(p, v))) : 0
-    const simUse = clicheVecs.length ? Math.max(...clicheVecs.map((c) => cosine(c, v))) : 0
     const simPrompt = cosine(promptVec, v)
 
     // Objects carry a property bank and a known-use bank, which separate
@@ -119,6 +144,7 @@ export async function scoreDivergent(
       ...idea,
       relevance,
       dCliche,
+      nearestCliche,
       dSelf,
       originality: onTask ? toOriginality(novelty) : 0,
       cliche: clicheVecs.length > 0 && dCliche < CLICHE_THRESHOLD,

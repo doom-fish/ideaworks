@@ -54,6 +54,16 @@ Jansson & Smith (1991, *Design Studies*) showed designers fixate on examples eve
 when explicitly instructed to be original. The cliché bank is therefore only
 revealed *after* you finish, never as a hint.
 
+When it is revealed, each stock answer is shown against the specific bank entry
+it landed nearest, not against the bank as a whole. "This was stock" is a verdict
+you have to take on trust; "this was stock, and here is the worn phrase it sat
+next to" is evidence you can check and disagree with. The disagreement is worth
+having on its own, since the scorer is a moderate correlate of human judgement
+rather than an authority. It also lands harder than a label does — writing
+"shave the graphite into a bowl to make a dry lubricant for a stiff lock",
+believing it original, and being shown *use the graphite to lubricate a lock*
+sitting in the bank is the whole lesson of the exercise in one line.
+
 There is one deliberate exception. These tasks are abstract enough that prose
 alone leaves people guessing — "write a different definition of the problem" only
 becomes clear once you have seen one definition that works next to one that
