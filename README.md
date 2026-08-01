@@ -167,6 +167,29 @@ All seven text fields have spellcheck on. Autocorrect is split deliberately:
 Controls also render at 16px on touch devices, because Safari on iOS zooms the
 viewport for anything smaller and never zooms back out.
 
+### Why this model
+
+The embedding model is the ceiling on scoring quality, so it was chosen by
+measurement rather than by default. `npm run benchmark-models` scores a labelled
+set of 71 responses across 5 objects with each candidate and reports the
+Spearman correlation against the intended ordering:
+
+```
+model                      dims   rho    stock  plaus  novel   gap   size
+all-MiniLM-L6-v2 (chosen)   384  0.837     10     55     78     68   23 MB
+bge-base-en-v1.5            768  0.816     16     65     87     71  106 MB
+bge-small-en-v1.5           384  0.800     17     55     70     53   34 MB
+gte-small                   384  0.776     20     59     79     59   34 MB
+all-mpnet-base-v2           768  0.759     19     58     70     51  106 MB
+```
+
+Models 4.6x larger rank *worse*. The bottleneck was never the model — it was the
+relevance thresholds, which had been fitted to a much smaller set and were
+wrongly zeroing genuine answers. Thresholds are now swept per model with a
+precision-first rule: an operating point that flags a real idea as off-task is
+rejected outright, because a good idea scored zero teaches exactly the wrong
+lesson.
+
 ### Calibration
 
 Published norms for these tasks were computed with different semantic models

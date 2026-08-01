@@ -72,14 +72,19 @@ export function datBand(raw: number): DatBand {
  *   middling        0.606 – 0.859  (median 0.676)
  *   genuinely novel 0.735 – 0.893  (median 0.768)
  *
- * Mapping [0.30, 0.92] onto [0, 100] yields the following calibrated spread,
- * which separates the bands cleanly without saturating at the top:
- *   stock   8 – 32   (median 14)
- *   middling 49 – 90 (median 67)
- *   novel   70 – 96  (median 81)
+ * Mapping [0.25, 0.91] onto [0, 100] yields this spread over the 71-item
+ * labelled set, which separates the bands without saturating at either end:
+ *   stock     median 10
+ *   plausible median 55
+ *   novel     median 78
+ *
+ * Spearman correlation with the intended ordering is 0.84. For reference,
+ * models 4.6x larger (bge-base-en-v1.5, all-mpnet-base-v2 at 106 MB against
+ * 23 MB) scored 0.82 and 0.76 on the same set — the bottleneck is the scoring
+ * design, not the embedding model.
  */
-export const ORIGINALITY_FLOOR = 0.3
-export const ORIGINALITY_CEIL = 0.92
+export const ORIGINALITY_FLOOR = 0.25
+export const ORIGINALITY_CEIL = 0.91
 
 /**
  * Relevance gating.
@@ -90,12 +95,17 @@ export const ORIGINALITY_CEIL = 0.92
  * now gated on the response actually being a response to the task.
  *
  * An answer counts as on-task if it either exploits a physical property of the
- * object, or is recognisably a known use of it. Measured over labelled on-task
- * and off-task responses for two objects, this pair of thresholds separated
- * 24/24 on-task from 28/28 off-task.
+ * object, or is recognisably a known use of it.
+ *
+ * These values come from sweeping both thresholds over a labelled set of 71
+ * responses across 5 objects (scripts/benchmark-models.mjs), selecting the
+ * operating point that catches the most off-task text while wrongly flagging
+ * *no* genuine answer. The previous pair (0.20 / 0.45) was fitted to a much
+ * smaller set and zeroed real ideas, which is the worst thing this scorer can
+ * do — a good idea marked "off-task" teaches exactly the wrong lesson.
  */
-export const RELEVANCE_PROP = 0.2
-export const RELEVANCE_USE = 0.45
+export const RELEVANCE_PROP = 0.14
+export const RELEVANCE_USE = 0.35
 
 /**
  * Fallback for problem-style prompts, which have no property bank and are
