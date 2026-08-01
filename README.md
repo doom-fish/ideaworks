@@ -235,8 +235,15 @@ Worth recording because it nearly went unnoticed. The first labelled set
 correlated **r = .87** between band and word count — novel items averaged 10
 words, stock items 5 — so a scorer could reach rho = .84 largely by counting
 words. The set is now length-matched (9.5 / 9.6 / 10.0 words per band, r = .37),
-and the honest figure is **rho = .62**. The earlier number was mostly measuring
+and the honest figure is **rho = .69**. The earlier number was mostly measuring
 the confound.
+
+That .69 is itself a later figure than the .62 first recorded here. Novelty used
+to blend distance-from-your-own-answers in at 38% weight, which penalised two
+genuinely different ideas for being topically related; restricting that to actual
+restatement moved the correlation from .62 to .69. The table below predates the
+change and is kept because what it settles — which model to ship — is unaffected
+by it.
 
 ### Why this model
 

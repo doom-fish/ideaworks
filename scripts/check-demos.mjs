@@ -76,7 +76,8 @@ try {
     `a an the of to in on for and or is are it its that this with you your as at be by not but so
      if one two more than what which who when where how do does have has can could would will they
      them their there then also only every each any all own into out up down off over about after
-     before very just still even much many few same other another new old first last no nor too`.split(
+     before very just still even much many few same other another new old first last no nor too
+     from together`.split(
       /\s+/,
     ),
   )
@@ -93,7 +94,8 @@ try {
      weight shape size colour texture object material something anything nothing
      idea ideas answer answers word words problem start begin
      point pick whole arrive solution time give take make come work turn keep
-     look feel find know need want use used using`.split(/\s+/),
+     look feel find know need want use used using
+     stock cliche answer score scored scoring`.split(/\s+/),
   )
 
   // Crude but sufficient stemming: without it "forests have firebreaks" in the
