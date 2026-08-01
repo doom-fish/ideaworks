@@ -39,6 +39,8 @@ export interface SessionRecord {
   judgedBestIndex?: number
   /** whether that prediction matched the top-scored idea */
   judgedCorrect?: boolean
+  /** the failure mode the user named for their chosen idea, before scoring */
+  failureMode?: string
   /** did the user see any AI suggestion during generation? */
   aiAssisted: boolean
 }

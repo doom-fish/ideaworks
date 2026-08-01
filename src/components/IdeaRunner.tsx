@@ -11,6 +11,7 @@ import {
 } from '../engine/calibration'
 import { fmtClock, useTimer } from '../lib/useTimer'
 import { Button, Chip, Panel, proseField, wordField } from './ui'
+import { Constellation, CoverageMeter, QuotaRing } from './LiveFeedback'
 
 export interface LiveIdea extends IdeaRecord {
   category?: string
@@ -22,6 +23,8 @@ export interface LiveIdea extends IdeaRecord {
   scored: boolean
   /** live, cheap feedback computed as you commit each entry */
   live?: { dCliche: number; cliche: boolean; offTask: boolean }
+  /** embedding, kept so the live meters can update without re-embedding */
+  vec?: Float32Array
 }
 
 interface Props {
@@ -115,7 +118,11 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
       const [iv] = await embedder.embed([t])
       const cl = prompt.cliches?.length ? await embedder.embed(prompt.cliches) : []
       const pr = prompt.props?.length ? await embedder.embed(prompt.props) : []
-      const [promptVec] = await embedder.embed([prompt.label])
+      // Must match what the final scorer uses. For exercises where the label is
+      // a heading rather than the task — Compare Two Cases asks "what do these
+      // share?" while the thing being answered is a separate problem — anchoring
+      // live feedback on the label judged answers against the wrong text.
+      const [promptVec] = await embedder.embed([exercise.promptTemplate(prompt)])
       const dCliche = cl.length ? Math.min(...cl.map((c) => cosDist(c, iv))) : 0.9
       const simProp = pr.length ? Math.max(...pr.map((x) => cosine(x, iv))) : 0
       const simUse = cl.length ? Math.max(...cl.map((c) => cosine(c, iv))) : 0
@@ -128,6 +135,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
           x.atMs === entry.atMs
             ? {
                 ...x,
+                vec: iv,
                 live: {
                   dCliche,
                   cliche: cl.length > 0 && dCliche < CLICHE_THRESHOLD,
@@ -175,6 +183,12 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   }
 
   const scoredCount = ideas.filter((i) => i.scored).length
+  const scoredWithVec = ideas.filter((i) => i.scored && i.vec)
+  const scoredVecs = scoredWithVec.map((i) => i.vec as Float32Array)
+  const scoredFlags = scoredWithVec.map((i) => ({
+    offTask: i.live?.offTask,
+    cliche: i.live?.cliche,
+  }))
   const quotaMet = !exercise.quota || scoredCount >= exercise.quota
   const lowTime = remaining < 30
   const transformDone = phase.kind === 'transform' && transformIdx >= sources.length
@@ -195,9 +209,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             </Chip>
           )}
           {exercise.quota && phase.scored && (
-            <Chip tone={quotaMet ? 'good' : 'neutral'}>
-              {scoredCount}/{exercise.quota}
-            </Chip>
+            <QuotaRing count={scoredCount} quota={exercise.quota} />
           )}
         </div>
         <div className="flex items-center gap-3">
@@ -233,11 +245,30 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>
           )}
 
+          {/* Both cases stay on screen together: the comparison is the active
+              ingredient, and showing them in sequence loses the effect. */}
+          {exercise.layout.twoCases && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {(['caseA', 'caseB'] as const).map((k, n) => (
+                <div key={k} className="rounded-xl border border-accent2/25 bg-accent2/5 p-3">
+                  <div className="text-[10px] uppercase tracking-[.14em] text-accent2">
+                    Case {n + 1}
+                  </div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-fg/90">
+                    {String(prompt.data?.[k] ?? '')}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="mt-3 rounded-xl border border-line bg-panel2/50 p-3">
             <div className="text-[10px] uppercase tracking-[.14em] text-muted">
               {exercise.layout.subjectLabel}
             </div>
-            <p className="mt-1 text-[15px] leading-relaxed text-fg">{prompt.label}</p>
+            <p className="mt-1 text-[15px] leading-relaxed text-fg">
+              {exercise.layout.twoCases ? String(prompt.data?.target ?? prompt.label) : prompt.label}
+            </p>
           </div>
 
           {extra ? (
@@ -266,7 +297,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
         >
           <div className="flex items-start gap-2">
             <span className="min-w-0 flex-1 text-sm leading-snug text-fg line-clamp-2">
-              {prompt.label}
+              {exercise.layout.twoCases ? String(prompt.data?.target ?? prompt.label) : prompt.label}
             </span>
             <span className="mt-0.5 shrink-0 text-[11px] text-muted">task</span>
           </div>
@@ -305,6 +336,15 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
           </div>
           <p className="mt-1.5 text-[15px] leading-snug text-fg">"{currentSource.text}"</p>
         </Panel>
+      )}
+
+      {scoredVecs.length >= 2 && (
+        <div className="space-y-2">
+          <Constellation vectors={scoredVecs} flags={scoredFlags} />
+          <div className="flex justify-end">
+            <CoverageMeter vectors={scoredVecs} />
+          </div>
+        </div>
       )}
 
       <div

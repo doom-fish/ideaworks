@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Chip, Panel } from './ui'
+import { Button, Chip, Panel, proseField } from './ui'
 import type { ScoredIdea } from '../engine/scoring'
 
 /**
@@ -25,9 +25,10 @@ export function JudgeGate({
   onCommit,
 }: {
   ideas: ScoredIdea[]
-  onCommit: (pickedIndex: number) => void
+  onCommit: (pickedIndex: number, failureMode: string) => void
 }) {
   const [picked, setPicked] = useState<number | null>(null)
+  const [failure, setFailure] = useState('')
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
@@ -68,12 +69,43 @@ export function JudgeGate({
         </div>
       </Panel>
 
+      {/* Argument analysis, not bare commitment.
+          Buçinca-style cognitive forcing functions all slow you down, but a
+          controlled comparison of four types found asking *why the answer might
+          be wrong* reduces overreliance more than simply committing to it
+          (Ghosh et al. 2026, arXiv:2601.18033). It also costs nothing: naming
+          the failure mode is how you find out whether the idea survives. */}
+      {picked !== null && (
+        <Panel className="rise p-5">
+          <label className="text-[10px] uppercase tracking-[.14em] text-muted">
+            What would make this one fail?
+          </label>
+          <p className="mt-1 text-xs leading-relaxed text-muted">
+            One line. The fastest way to find out whether an idea is any good is to try to kill
+            it first.
+          </p>
+          <textarea
+            autoFocus
+            value={failure}
+            onChange={(e) => setFailure(e.target.value)}
+            rows={2}
+            {...proseField}
+            placeholder="It falls apart if…"
+            className="mt-3 w-full resize-none rounded-xl border border-line bg-panel2 px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+        </Panel>
+      )}
+
       <Button
         className="w-full"
-        disabled={picked === null}
-        onClick={() => picked !== null && onCommit(picked)}
+        disabled={picked === null || failure.trim().length < 8}
+        onClick={() => picked !== null && onCommit(picked, failure.trim())}
       >
-        {picked === null ? 'Pick one' : 'Lock it in and show the scores'}
+        {picked === null
+          ? 'Pick one'
+          : failure.trim().length < 8
+            ? 'Name how it could fail'
+            : 'Lock it in and show the scores'}
       </Button>
     </div>
   )

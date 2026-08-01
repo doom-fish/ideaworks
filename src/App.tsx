@@ -109,7 +109,10 @@ export default function App() {
       id: uid(),
       exerciseId: ex.id,
       promptKey: p.key,
-      promptLabel: p.label,
+      // Store the resolved task, not the generic heading. For Compare Two Cases
+      // the label is "what do these share?", which tells you nothing about
+      // which session it was when you look back at your history.
+      promptLabel: ex.promptTemplate(p).split('\n')[0].slice(0, 160),
       startedAt: Date.now() - durationMs,
       durationMs,
       ideas,
@@ -144,12 +147,16 @@ export default function App() {
     setView(ex.kind === 'idea-list' && ideaCount >= 4 ? 'judge' : 'result')
   }
 
-  const commitJudgement = async (index: number) => {
+  const commitJudgement = async (index: number, failureMode: string) => {
     setJudged(index)
     if (result && lastId) {
       const top = [...result.ideas].sort((a, b) => b.originality - a.originality)[0]
       const correct = result.ideas.indexOf(top) === index
-      await db.sessions.update(lastId, { judgedBestIndex: index, judgedCorrect: correct })
+      await db.sessions.update(lastId, {
+        judgedBestIndex: index,
+        judgedCorrect: correct,
+        failureMode,
+      })
       await refresh()
     }
     setView('result')
@@ -497,7 +504,7 @@ export default function App() {
   if (view === 'judge' && result) {
     return (
       <Shell view={view} setView={setView}>
-        <JudgeGate ideas={result.ideas} onCommit={(i) => void commitJudgement(i)} />
+        <JudgeGate ideas={result.ideas} onCommit={(i, f) => void commitJudgement(i, f)} />
       </Shell>
     )
   }

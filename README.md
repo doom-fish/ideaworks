@@ -85,6 +85,9 @@ correcting for publication bias. Real, but slow.
 | **Perspective Shift** | Breaking fixation | Jansson & Smith (1991); Dane et al. (2011) |
 | **Reverse Brainstorm** | Reframing via failure space | ⚠ thin direct evidence — variety |
 | **Counterfactual World** | Multi-step consequence chains | ⚠ thin direct evidence — variety |
+| **Branch & Prune** | Exploring before committing | Kim & Kay (2025), CHI, arXiv:2507.03307 |
+| **Dimension Mapper** | Systematic coverage of a design space | Choi & Kim (2025), UIST, arXiv:2507.22163 |
+| **Compare Two Cases** | Schema induction across domains | Gick & Holyoak (1983); Loewenstein et al. (1999) |
 
 The last two are labelled in-app as weakly supported. A lot of popular
 "creativity technique" content is folklore, and the app says which parts of
@@ -93,10 +96,28 @@ itself are on firm ground.
 ### The judgement gate
 
 Open-generation sessions make you commit to which of your own ideas was best
-*before* revealing any scores. Idea evaluation is a distinct trainable component
+*before* revealing any scores, and then name how that idea could fail. A
+controlled comparison of four cognitive forcing functions found argument
+analysis — asking why an answer might be wrong — reduces overreliance more than
+bare commitment does (Ghosh et al. 2026, arXiv:2601.18033). Idea evaluation is a distinct trainable component
 that carried substantial weight in the training meta-analyses, and seeing a
 number first would simply overwrite your own assessment. Agreement rate is
 tracked over time as information, not as a score to beat.
+
+### Live feedback, and what is deliberately not shown
+
+During a session you get a quota ring, a constellation strip placing each idea
+by how far it landed from everything already banked, and a running spread meter.
+
+All of it is aggregate. No per-idea score appears until the session ends,
+because a number beside each line turns the session into metric-chasing and
+destroys the judgement gate, which depends on you forming your own opinion
+first. Coverage is safe to show live: it rewards going somewhere new, which is
+the behaviour being trained, and cannot be gamed by polishing one answer.
+
+Equally deliberate: no leaderboard, no points for volume, no streaks. Those
+patterns raise evaluation apprehension and push people toward safe, conventional
+answers — the opposite of the goal.
 
 ### Session design
 

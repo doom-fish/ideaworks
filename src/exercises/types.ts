@@ -70,6 +70,12 @@ export interface Phase {
 export interface PromptLayout {
   /** label above the subject, e.g. "Object", "The complaint" */
   subjectLabel: string
+  /**
+   * Render two side-by-side cases above the subject, from data.caseA/caseB.
+   * The comparison is the active ingredient in schema induction, so both must
+   * be visible at once rather than shown in sequence.
+   */
+  twoCases?: boolean
   /** key in prompt.data to surface in its own block */
   extraKey?: string
   /** label for that block, e.g. "Constraint", "Source system" */

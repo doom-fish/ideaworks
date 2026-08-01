@@ -112,12 +112,16 @@ export const RELEVANCE_USE = 0.35
 
 /**
  * Fallback for problem-style prompts, which have no property bank and are
- * scored against the prompt text alone. Separation there is genuinely weaker
- * (good answers ran 0.06–0.53, off-task up to 0.22), so this sits low on
- * purpose: wrongly calling a real idea off-task is far more damaging than
- * letting a nonsense one through.
+ * scored against the prompt text alone.
+ *
+ * Separation is genuinely weaker here. On a structured problem prompt, good
+ * answers measured 0.085–0.332 against the prompt while off-task text ran
+ * −0.049–0.062, so the usable boundary is narrow. Set below the weakest good
+ * answer rather than midway: wrongly calling a real idea off-task is far more
+ * damaging than letting a nonsense one through, and answers to a structured
+ * exercise legitimately drift from the literal wording of the prompt.
  */
-export const RELEVANCE_PROMPT = 0.1
+export const RELEVANCE_PROMPT = 0.07
 
 /**
  * Relevance bar for a transform entry measured against its own source.

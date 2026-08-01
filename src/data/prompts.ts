@@ -865,3 +865,123 @@ export const PERSPECTIVE_ROLES = [
   'a logistics dispatcher',
   'a stand-up comedian',
 ]
+
+/**
+ * Branch-and-Prune challenges (arXiv:2507.03307, Kim & Kay, CHI 2025).
+ *
+ * Recursive divergence and convergence: broad directions, commit to one, then
+ * diverge again inside it. The structure exists to prevent the two failure
+ * modes of free ideation — wandering without ever committing, and committing so
+ * early that the space is never explored.
+ */
+export const BRANCH_PROMPTS: Prompt[] = [
+  { key: 'b1', label: 'Get people to actually read the safety card on a plane.' },
+  { key: 'b2', label: 'Make a supermarket queue feel shorter without making it faster.' },
+  { key: 'b3', label: 'Help someone remember the name of a person they just met.' },
+  { key: 'b4', label: 'Make a public park feel safe after dark.' },
+  { key: 'b5', label: 'Get a teenager to care about their pension.' },
+  { key: 'b6', label: 'Make a long train journey feel like it passed quickly.' },
+  { key: 'b7', label: 'Reduce the number of parcels stolen from doorsteps.' },
+  { key: 'b8', label: 'Make people drink more water during the day.' },
+  { key: 'b9', label: 'Get neighbours who have never spoken to talk to each other.' },
+  { key: 'b10', label: 'Make a museum queue part of the exhibition.' },
+]
+
+/**
+ * Dimension Mapper problems (arXiv:2507.22163, Choi & Kim, UIST 2025).
+ *
+ * Naming the axes of a problem and then deliberately visiting both extremes of
+ * each turns free association into systematic coverage of the space. Reported a
+ * 2.13x diversity gain over unstructured ideation.
+ */
+export const DIMENSION_PROMPTS: Prompt[] = [
+  { key: 'd1', label: 'Design a new kind of alarm clock.' },
+  { key: 'd2', label: 'Design a way for two people to share a meal remotely.' },
+  { key: 'd3', label: 'Design a bench for a city street.' },
+  { key: 'd4', label: 'Design a way to teach someone a song.' },
+  { key: 'd5', label: 'Design a container for carrying liquid.' },
+  { key: 'd6', label: 'Design a way to mark a trail through a forest.' },
+  { key: 'd7', label: 'Design a light for a room with no electricity.' },
+  { key: 'd8', label: 'Design a way to store a year of memories.' },
+  { key: 'd9', label: 'Design a doorbell.' },
+  { key: 'd10', label: 'Design a way to wake a sleeping household in an emergency.' },
+]
+
+/**
+ * Compare-Two-Cases (Gick & Holyoak, 1983; Loewenstein, Thompson & Gentner,
+ * 1999).
+ *
+ * Reading one analogue produces transfer only about 20% of the time. Comparing
+ * *two* surface-different cases that share a deep structure induces the schema
+ * and roughly triples spontaneous transfer. The comparison is the mechanism, so
+ * the exercise makes stating the shared structure a required step.
+ */
+export const COMPARE_PROMPTS: Prompt[] = [
+  {
+    key: 'cc1',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'A general cannot march his whole army down one road to the fortress, because the road is mined and will blow under a large force. He splits the army into small groups, sends each along a different road, and has them arrive together.',
+      caseB:
+        'A surgeon must destroy a tumour with radiation. A beam strong enough to kill the tumour destroys the healthy tissue it passes through. She aims many weak beams from different directions so they meet at the tumour.',
+      target:
+        'A city keeps flooding because all its storm drains feed one overloaded culvert.',
+    },
+  },
+  {
+    key: 'cc2',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'A vaccine works by showing the immune system a harmless fragment of a pathogen, so the body builds a response before it ever meets the real thing.',
+      caseB:
+        'A pilot trains in a simulator that reproduces engine failures precisely, so the first real failure is not the first time they have handled one.',
+      target: 'New employees keep making the same expensive mistake in their first month.',
+    },
+  },
+  {
+    key: 'cc3',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'A bank charges a small fee for withdrawals under a threshold, which nudges people to take out larger sums less often and cuts queueing at the counter.',
+      caseB:
+        'A city introduces a charge for driving into the centre at peak hours, and traffic falls sharply as people shift their journeys to other times.',
+      target: 'A hospital clinic is overwhelmed on Monday mornings and half empty on Thursdays.',
+    },
+  },
+  {
+    key: 'cc4',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'Coral reefs survive storms because thousands of small organisms each rebuild a fragment, with no single structure whose loss would end the reef.',
+      caseB:
+        'A file-sharing network stays available when any machine goes offline, because every file exists in pieces on many machines at once.',
+      target: 'A town loses power for days whenever its single substation fails.',
+    },
+  },
+  {
+    key: 'cc5',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'A shepherd fits one sheep in the flock with a bell, and can locate the whole flock in fog by listening for that single animal.',
+      caseB:
+        'A warehouse tags a handful of pallets with trackers and infers the movement of the entire stock from how those few travel.',
+      target: 'A charity cannot afford to survey every household it serves.',
+    },
+  },
+  {
+    key: 'cc6',
+    label: 'What do these two have in common — underneath the surface?',
+    data: {
+      caseA:
+        'A forest fire is stopped by cutting a firebreak — a deliberate gap of cleared ground that the fire cannot jump.',
+      caseB:
+        'A ship survives a hull breach because it is divided into sealed compartments, so flooding in one does not spread to the rest.',
+      target: 'One failing service keeps taking down an entire software system.',
+    },
+  },
+]
