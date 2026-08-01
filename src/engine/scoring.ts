@@ -7,6 +7,8 @@ import {
   ORIGINALITY_FLOOR,
   RELEVANCE_PROMPT,
   RELEVANCE_SOURCE,
+  DUPLICATE_DISTANCE,
+  DUPLICATE_PENALTY,
   controlForElaboration,
   RELEVANCE_PROP,
   RELEVANCE_USE,
@@ -103,11 +105,14 @@ export async function scoreDivergent(
       Math.max(simProp, simUse, simSource, grounded && !idea.source ? 0 : simPrompt),
     )
 
-    // Novelty is only meaningful once the response is actually on-task, and is
-    // corrected for elaboration so that padding an idea out cannot raise it.
-    const rawNovelty = clicheVecs.length
-      ? 0.62 * clamp01(dCliche / 0.9) + 0.38 * clamp01(dSelf / 0.9)
-      : clamp01(dSelf / 0.9)
+    // Novelty is distance from the stereotyped responses, with a penalty only
+    // for genuine restatement. Blending self-distance in continuously punished
+    // two different-but-related good ideas for resembling each other, which is
+    // not what unoriginal means.
+    const base = clicheVecs.length ? clamp01(dCliche / 0.9) : clamp01(dSelf / 0.9)
+    const duplicate =
+      dSelf < DUPLICATE_DISTANCE ? (1 - dSelf / DUPLICATE_DISTANCE) * DUPLICATE_PENALTY : 0
+    const rawNovelty = clamp01(base - duplicate)
     const novelty = controlForElaboration(rawNovelty, wordCount(idea.text))
 
     return {

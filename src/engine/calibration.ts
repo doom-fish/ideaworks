@@ -77,17 +77,17 @@ export function datBand(raw: number): DatBand {
  * version of that set was not, and correlated r = .87 between band and word
  * count — so a scorer could reach rho = .84 largely by counting words. On the
  * corrected set the honest figures are:
- *   stock     median 36
- *   plausible median 56
- *   novel     median 75
- *   Spearman against the intended ordering: 0.62
+ *   stock     median 35
+ *   plausible median 61
+ *   novel     median 76
+ *   Spearman against the intended ordering: 0.69
  *
  * For reference on the same corrected set, models 4.6x larger scored 0.64
  * (bge-base-en-v1.5) and 0.61 (all-mpnet-base-v2) at 106 MB against 23 MB —
  * within noise at this sample size, so the small model stays.
  */
-export const ORIGINALITY_FLOOR = 0.401
-export const ORIGINALITY_CEIL = 0.83
+export const ORIGINALITY_FLOOR = 0.264
+export const ORIGINALITY_CEIL = 0.893
 
 /**
  * Relevance gating.
@@ -207,6 +207,29 @@ export const FAR_THRESHOLD = 0.66
  */
 export const FLEXIBILITY_THRESHOLD = 0.45
 
-/** Chain-step distance bands for the semantic stretch exercise. */
-export const CHAIN_GOOD = 0.8
+/**
+ * Chain-step distance bands for the semantic stretch exercise.
+ *
+ * Measured over 15 obviously-related and 15 obviously-unrelated word pairs:
+ * related pairs top out at 0.590 distance, unrelated pairs start at 0.709, so
+ * there is a clean gap between them. The previous "good" bar of 0.80 sat well
+ * inside the unrelated band and marked only 10 of 15 genuinely unrelated jumps
+ * as good — the app kept calling distant words close. At 0.70 all 15 unrelated
+ * jumps register and no related pair sneaks through.
+ */
+export const CHAIN_GOOD = 0.7
 export const CHAIN_WEAK = 0.6
+
+/**
+ * Near-duplicate threshold for the self-similarity penalty.
+ *
+ * Distance to your nearest other answer was originally folded into novelty at
+ * 38% weight, which conflated "topically related to my other idea" with
+ * "unoriginal". Two genuinely novel brick uses — grinding it to pigment and
+ * soaking it to water a plant — sat 0.55 apart and so dragged each other down,
+ * while a mundane idea that happened to be lexically unlike everything else
+ * scored 96. Self-similarity now only penalises actual restatement, below this
+ * distance, and does nothing above it.
+ */
+export const DUPLICATE_DISTANCE = 0.45
+export const DUPLICATE_PENALTY = 0.4

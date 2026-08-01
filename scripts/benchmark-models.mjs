@@ -211,6 +211,15 @@ const ELAB_SLOPE = 0.0476
 const ELAB_MEAN_LN = 1.889
 const controlForElaboration = (nov, words) =>
   words < 1 ? nov : nov - ELAB_SLOPE * (Math.log(words) - ELAB_MEAN_LN)
+const DUP_D = 0.45
+const DUP_P = 0.4
+// Novelty is distance from the cliche bank, penalised only for genuine
+// restatement. Blending self-distance in continuously punished two different
+// good ideas for being topically related.
+const novelty = (dCliche, dSelf) =>
+  clamp01(
+    clamp01(dCliche / 0.9) - (dSelf < DUP_D ? (1 - dSelf / DUP_D) * DUP_P : 0),
+  )
 const wordsIn = (t) => t.trim().split(/\s+/).filter(Boolean).length
 const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b)
@@ -318,10 +327,7 @@ async function evaluate(modelId) {
         object: obj.name,
         simProp: Math.max(...propV.map((p) => cos(p, v))),
         simUse: Math.max(...clV.map((c) => cos(c, v))),
-        novelty: controlForElaboration(
-          0.62 * clamp01(dCliche / 0.9) + 0.38 * clamp01(dSelf / 0.9),
-          wordsIn(text),
-        ),
+        novelty: controlForElaboration(novelty(dCliche, dSelf), wordsIn(text)),
       })
     })
   }
