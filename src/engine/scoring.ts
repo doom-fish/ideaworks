@@ -40,6 +40,8 @@ export interface ScoredIdea extends IdeaRecord {
 export interface ScoreResult {
   ideas: ScoredIdea[]
   metrics: SessionMetrics
+  /** embeddings, kept so the results screen can project the session to a map */
+  vectors: Float32Array[]
 }
 
 /**
@@ -115,7 +117,7 @@ export async function scoreDivergent(
     }
   })
 
-  return { ideas: scored, metrics: buildMetrics(scored, ideaVecs, texts) }
+  return { ideas: scored, metrics: buildMetrics(scored, ideaVecs, texts), vectors: ideaVecs }
 }
 
 /**
@@ -153,7 +155,7 @@ export async function scorePairwise(
     }
   })
 
-  return { ideas: scored, metrics: buildMetrics(scored, vecs, texts) }
+  return { ideas: scored, metrics: buildMetrics(scored, vecs, texts), vectors: vecs }
 }
 
 function buildMetrics(

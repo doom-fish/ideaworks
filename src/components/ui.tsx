@@ -140,3 +140,64 @@ export const wordField = {
   autoCapitalize: 'none',
   autoComplete: 'off',
 } as const
+
+
+/**
+ * Colour per exercise category.
+ *
+ * Twelve visually identical cards are hard to scan, and the category is the
+ * thing you actually choose by — whether you want to generate, converge,
+ * reframe or break a fixation. A consistent hue per category makes the list
+ * skimmable and carries through to the session and the results.
+ */
+export const CATEGORY_STYLE: Record<
+  string,
+  { dot: string; text: string; border: string; bg: string }
+> = {
+  divergent: {
+    dot: 'bg-accent',
+    text: 'text-accent',
+    border: 'border-accent/40',
+    bg: 'bg-accent/10',
+  },
+  convergent: {
+    dot: 'bg-accent2',
+    text: 'text-accent2',
+    border: 'border-accent2/40',
+    bg: 'bg-accent2/10',
+  },
+  'de-fixation': {
+    dot: 'bg-warn',
+    text: 'text-warn',
+    border: 'border-warn/40',
+    bg: 'bg-warn/10',
+  },
+  reframing: {
+    dot: 'bg-danger',
+    text: 'text-danger',
+    border: 'border-danger/40',
+    bg: 'bg-danger/10',
+  },
+  combination: {
+    dot: 'bg-sky-400',
+    text: 'text-sky-400',
+    border: 'border-sky-400/40',
+    bg: 'bg-sky-400/10',
+  },
+  analogy: {
+    dot: 'bg-fuchsia-400',
+    text: 'text-fuchsia-400',
+    border: 'border-fuchsia-400/40',
+    bg: 'bg-fuchsia-400/10',
+  },
+  constraint: {
+    dot: 'bg-amber-300',
+    text: 'text-amber-300',
+    border: 'border-amber-300/40',
+    bg: 'bg-amber-300/10',
+  },
+}
+
+export function categoryStyle(category: string) {
+  return CATEGORY_STYLE[category] ?? CATEGORY_STYLE.divergent
+}

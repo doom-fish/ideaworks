@@ -15,7 +15,7 @@ import { craByTier, type CraItem } from './data/cra'
 import { CHAIN_GOOD, CHAIN_WEAK } from './engine/calibration'
 import { STRETCH_SEEDS } from './data/prompts'
 import type { PartGrade } from './data/genericParts'
-import { Button, Chip, Panel } from './components/ui'
+import { Button, Chip, Panel, categoryStyle } from './components/ui'
 import { IdeaRunner, type LiveIdea } from './components/IdeaRunner'
 import { ChainRunner, DatRunner, DecomposeRunner, RatRunner } from './components/Runners'
 import { SessionResult } from './components/SessionResult'
@@ -30,6 +30,8 @@ interface Result {
   ideas: ScoredIdea[]
   metrics: SessionMetrics
   headline?: { label: string; value: string; hint?: string }
+  /** embeddings for the semantic map, when the exercise has meaningful ones */
+  vectors?: Float32Array[]
 }
 
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
@@ -207,7 +209,7 @@ export default function App() {
               pr.props ?? [],
             )
       setLastId(await save(ex, pr, all, res.metrics, durationMs))
-      setResult({ exercise: ex, ideas: res.ideas, metrics: res.metrics })
+      setResult({ exercise: ex, ideas: res.ideas, metrics: res.metrics, vectors: res.vectors })
       goToResult(ex, res.ideas.length)
     })
   }
@@ -218,6 +220,7 @@ export default function App() {
     const pr = prompt
     runScoring(words, async () => {
     const res = await scoreDAT(words)
+    const datVectors = await embedder.embed(res.used)
     const metrics: SessionMetrics = {
       fluency: res.used.length,
       originality: Math.round(res.score),
@@ -251,6 +254,7 @@ export default function App() {
         }
       }),
       metrics,
+      vectors: datVectors,
       headline: {
         label: `DAT distance · ${res.band.label}`,
         value: res.score.toFixed(1),
@@ -506,6 +510,7 @@ export default function App() {
           ideas={result.ideas}
           metrics={result.metrics}
           headline={result.headline}
+          vectors={result.vectors}
           judgedIndex={judged}
           judgeHistory={judgeHistory}
           note={note}
@@ -677,22 +682,39 @@ export default function App() {
           <div className="grid gap-3 sm:grid-cols-2">
             {EXERCISES.map((ex) => {
               const n = sessions.filter((s) => s.exerciseId === ex.id).length
+              const cat = categoryStyle(ex.category)
               return (
                 <button
                   key={ex.id}
                   onClick={() => begin(ex)}
-                  className="group rounded-2xl border border-line bg-panel/60 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-accent/50 hover:bg-panel2/60"
+                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-panel/60 p-4 pl-5 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-panel2/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-0"
                 >
+                  {/* A colour spine per category: twelve identical cards are
+                      impossible to skim, and category is what you choose by. */}
+                  <span
+                    aria-hidden
+                    className={`absolute inset-y-0 left-0 w-1 ${cat.dot} opacity-60 transition-opacity group-hover:opacity-100`}
+                  />
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium">{ex.name}</span>
-                    <Chip tone={n ? 'good' : 'neutral'}>{n ? `${n}×` : 'new'}</Chip>
+                    <span className="font-medium leading-snug">{ex.name}</span>
+                    <span
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] ${
+                        n
+                          ? 'border-accent2/30 bg-accent2/10 text-accent2'
+                          : 'border-line bg-panel2 text-muted'
+                      }`}
+                    >
+                      {n ? `${n}×` : 'new'}
+                    </span>
                   </div>
                   <p className="mt-1.5 text-sm leading-snug text-muted">{ex.blurb}</p>
-                  <div className="mt-3 flex items-center gap-2 text-[11px] text-muted">
-                    <span className="rounded-full border border-line px-2 py-0.5">
+                  {/* mt-auto keeps the meta row on the baseline of every card in
+                      the row, however many lines the blurb takes. */}
+                  <div className="mt-auto flex items-center gap-2 pt-3 text-[11px]">
+                    <span className={`rounded-full border px-2 py-0.5 ${cat.border} ${cat.bg} ${cat.text}`}>
                       {ex.category}
                     </span>
-                    <span>{Math.round(ex.seconds / 60)} min</span>
+                    <span className="text-muted">{Math.round(ex.seconds / 60)} min</span>
                   </div>
                 </button>
               )

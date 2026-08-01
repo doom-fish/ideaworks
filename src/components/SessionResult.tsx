@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Button, Chip, Panel, Stat, proseField } from './ui'
 import { JudgementVerdict } from './JudgeGate'
+import { SemanticMap } from './SemanticMap'
+import { SPRING, useSpring } from '../lib/spring'
 import type { ScoredIdea } from '../engine/scoring'
 import type { SessionMetrics } from '../engine/db'
 import type { Exercise, ExerciseKind } from '../exercises/types'
@@ -142,11 +144,45 @@ function statsFor(kind: ExerciseKind, m: SessionMetrics): StatSpec[] {
  * this app needs to protect. Competence feedback and metacognitive reflection
  * are the two patterns that survive that critique.
  */
+/**
+ * Counts a numeric headline up to its value.
+ *
+ * Falls back to plain text for anything non-numeric (scores like "3/8"), rather
+ * than animating a string into nonsense.
+ */
+function SpringNumber({ text }: { text: string }) {
+  const n = Number(text)
+  const numeric = text.trim() !== '' && Number.isFinite(n)
+  const v = useSpring(numeric ? n : 0, SPRING.soft, 0.08)
+  if (!numeric) return <>{text}</>
+  const decimals = (text.split('.')[1] ?? '').length
+  return <>{v.toFixed(decimals)}</>
+}
+
+/** A bar and a counter that spring to their value, staggered down the list. */
+function ScoreBar({ value, delay }: { value: number; delay: number }) {
+  const v = useSpring(value, SPRING.snappy, delay)
+  return (
+    <>
+      <div className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-panel2">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
+          style={{ width: `${Math.max(0, Math.min(100, v))}%` }}
+        />
+      </div>
+      <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
+        {Math.round(v)}
+      </span>
+    </>
+  )
+}
+
 export function SessionResult({
   exercise,
   ideas,
   metrics,
   headline,
+  vectors,
   judgedIndex,
   judgeHistory,
   note,
@@ -158,6 +194,7 @@ export function SessionResult({
   ideas: ScoredIdea[]
   metrics: SessionMetrics
   headline?: { label: string; value: string; hint?: string }
+  vectors?: Float32Array[]
   judgedIndex?: number | null
   judgeHistory?: boolean[]
   note: string
@@ -193,7 +230,7 @@ export function SessionResult({
         <Panel className="p-6 text-center">
           <div className="text-[10px] uppercase tracking-[.14em] text-muted">{headline.label}</div>
           <div className="mt-1 text-6xl font-semibold tabular-nums text-accent2">
-            {headline.value}
+            <SpringNumber text={headline.value} />
           </div>
           {headline.hint && <p className="mt-2 text-xs text-muted">{headline.hint}</p>}
         </Panel>
@@ -213,6 +250,43 @@ export function SessionResult({
           searching and started listing variations. Next time, ban your own category once you have
           used it twice.
         </div>
+      )}
+
+      {vectors && vectors.length >= 3 && (
+        <Panel className="p-5">
+          <div className="grid items-center gap-5 sm:grid-cols-[1fr_auto]">
+            <SemanticMap
+              vectors={vectors}
+              height={250}
+              items={ideas.map((i) => ({
+                label: i.text,
+                score: i.originality,
+                offTask: i.offTask,
+              }))}
+            />
+            <div className="sm:max-w-[15rem]">
+              <div className="text-[10px] uppercase tracking-[.14em] text-muted">
+                Where your ideas landed
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                The same distances that produced your score, drawn as a map. Ideas sitting on top
+                of each other really are near-duplicates. The labelled points are the ones that
+                defined the outer edge of your thinking.
+              </p>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-3xl font-semibold tabular-nums text-accent2">
+                  {metrics.flexibility}
+                </span>
+                <span className="text-xs text-muted">
+                  distinct clusters
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted/80">
+                Points that never separate are one idea wearing different words.
+              </p>
+            </div>
+          </div>
+        </Panel>
       )}
 
       {typeof judgedIndex === 'number' && ideas[judgedIndex] && (
@@ -301,15 +375,7 @@ export function SessionResult({
             <div key={i} className="flex items-center gap-3 px-4 py-2.5">
               <span className="w-5 text-right font-mono text-xs text-muted">{i + 1}</span>
               <span className="min-w-0 flex-1 truncate text-sm">{idea.text}</span>
-              <div className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-panel2">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
-                  style={{ width: `${idea.originality}%` }}
-                />
-              </div>
-              <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-muted">
-                {idea.originality}
-              </span>
+              <ScoreBar value={idea.originality} delay={0.04 * i} />
             </div>
           ))}
         </div>

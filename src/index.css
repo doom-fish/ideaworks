@@ -30,7 +30,22 @@ html {
 body {
   background-color: var(--color-ink);
   color: var(--color-fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /*
+   * Deliberately does not lead with system-ui / ui-sans-serif.
+   *
+   * Those keywords defer to the platform's configured UI font, and where that
+   * mapping is wrong — some Linux and Android fontconfig setups resolve it to a
+   * monospace face — they match first and render the entire app in a typewriter
+   * font, with every later fallback ignored.
+   *
+   * Naming the platform fonts explicitly is safe because each only matches on
+   * its own platform: -apple-system gives SF Pro on macOS and iOS, Segoe UI on
+   * Windows, Roboto on Android, Noto or Liberation on Linux. This is the same
+   * reasoning behind GitHub's own stack.
+   */
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', 'Liberation Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   /* Stop iOS inflating body text when the device is rotated. */
   -webkit-text-size-adjust: 100%;
