@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 #
-# Build and publish Ideaworks to the Caddy vhost at /srv/ideaworks.
+# Build and publish Ideaworks to a self-hosted Caddy vhost.
 #
 #   ./scripts/deploy.sh
+#
+# The canonical deploy is GitHub Pages via .github/workflows/pages.yml; this
+# script is kept for self-hosting, where precompressed sidecars and cache
+# headers are available and Pages' on-the-fly gzip is not. It expects a matching
+# vhost in the Caddyfile — see the Deploying section of the README.
 #
 # Static files only — there is no server-side component. The embedding model is
 # vendored into public/models, so the deployed site makes no third-party

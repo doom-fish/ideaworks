@@ -1,6 +1,6 @@
 # Ideaworks
 
-**[Try it → doom-fish.github.io/ideaworks](https://doom-fish.github.io/ideaworks/)**
+**[Try it → ideaworks.doom.fish](https://ideaworks.doom.fish/)**
 
 Training for divergent thinking and original idea generation. Every exercise
 traces to published research, all scoring runs on-device, and no AI ever
@@ -210,108 +210,56 @@ scoring blend changes.
 
 ## Deploying
 
-### GitHub Pages
+Pushing to `main` builds and publishes to GitHub Pages via
+`.github/workflows/pages.yml`, served at
+[ideaworks.doom.fish](https://ideaworks.doom.fish/).
 
-Pushing to `main` builds and publishes via `.github/workflows/pages.yml`.
+### Base path
 
-A project site is served from `/<repo>/` rather than the domain root, so the
-build sets `BASE_PATH`. Everything that constructs a URL at runtime reads
-`import.meta.env.BASE_URL` — including the path the embedding model loads from
-— so that single value is all that changes between Pages and the self-hosted
-vhost. The workflow also copies `index.html` to `404.html`, because Pages has
-no SPA rewrite and would otherwise 404 on a deep link.
+This is the one thing that is easy to get wrong and hard to diagnose. A GitHub
+Pages *project* site is served from `/<repo>/`, but a site with a **custom
+domain** is served from the root of that domain. Everything that builds a URL
+at runtime reads `import.meta.env.BASE_URL` — including the path the embedding
+model loads from — so a wrong base produces a site that loads fine and then can
+never score anything.
 
-Two things Pages cannot do that the Caddy setup does: serve the precompressed
-`.zst` sidecars, and set cache headers. It gzips on the fly instead, which is
-enough.
+The workflow therefore derives it rather than hardcoding it:
 
-### Self-hosted (Caddy)
-
-The site is static — no server-side component, no database, no API. It is
-published to a Caddy vhost at `https://ideaworks.doom.fish/`:
-
-```bash
-./scripts/deploy.sh
+```yaml
+if [ -f public/CNAME ]; then
+  echo "path=/"                                    # custom domain → root
+else
+  echo "path=/${{ github.event.repository.name }}/" # project site → /<repo>/
+fi
 ```
 
-That builds, precompresses, rsyncs to `/srv/ideaworks`, and reloads Caddy.
+Delete `public/CNAME` and it reverts to `doom-fish.github.io/ideaworks/`
+correctly, with no other change.
 
-The Caddy block lives in `/etc/caddy/Caddyfile` and does four things worth
-noting:
+### DNS
 
-- **`precompressed zstd gzip`** — the ONNX weights and the ORT WebAssembly
-  runtime are ~46 MB raw and ~19 MB as zstd. `deploy.sh` writes `.zst`/`.gz`
-  sidecars so Caddy serves the compressed variant at zero CPU per request.
-  Caddy's `encode` alone would not help here: it only compresses text-ish
-  content types by default, and compressing 23 MB per request is wasteful.
-- **Explicit MIME types** for `.wasm` (needed for streaming compilation) and
-  `.onnx` (Caddy has no entry for it).
-- **Immutable caching** on `/assets/*` and `/models/*`, which are
-  content-addressed or pinned, and `no-cache` on the entry HTML so a redeploy
-  never leaves stale asset references.
-- **`handle_errors` forces `Cache-Control: no-store`.** This matters more than
-  it looks. Error responses would otherwise inherit the immutable header above,
-  so a single failed request for a model file gets pinned in the browser cache
-  for a year — the app then appears permanently stuck at "scoring" for that
-  visitor, and an ordinary reload does not clear it.
-- **Assets and models are served from their own `handle` blocks**, outside the
-  SPA fallback. Routing them through `try_files … /index.html` would answer a
-  missing model file with the HTML shell and a `200`, which the loader then
-  tries to parse as JSON and fails on in a way that is very hard to diagnose.
-- **`try_files … /index.html`** for everything else, so the SPA survives a
-  deep-link refresh.
+`public/CNAME` pins the custom domain. The matching record is:
 
-### The model is vendored
-
-`public/models/` holds `Xenova/all-MiniLM-L6-v2` (config, tokenizer, and the q8
-ONNX weights). The worker sets `allowRemoteModels = false`, so the deployed site
-never contacts huggingface.co and works offline after first load.
-
-One sharp edge worth remembering: `env.localModelPath` **must be a root-relative
-path**, not an absolute URL. transformers.js skips its local-file lookup
-entirely when that value parses as an http(s) URL:
-
-```js
-// get_file_metadata.js
-if (env.allowLocalModels) {
-  const isURL = isValidUrl(localPath, ['http:', 'https:'])
-  if (!isURL) { /* only here does it look for the local file */ }
-}
+```
+ideaworks   CNAME   doom-fish.github.io.
 ```
 
-With an absolute URL and remote models disabled, metadata resolves to
-`{ exists: false }`, `loadTokenizer` returns `[]`, and you get a pipeline whose
-tokenizer is `null` — surfacing much later as
-`TypeError: this.tokenizer is not a function`. It can appear to work in
-development purely because the model is still in the Cache API from an earlier
-run that was allowed to hit the CDN.
+A subdomain uses `CNAME`; only an apex would need the four `A` records. The
+apex `doom.fish` already serves a different Pages site and is left alone.
 
-### Scoring must never hang
+Enable **Enforce HTTPS** in the repository's Pages settings once the certificate
+has been issued — that usually takes a few minutes after DNS propagates.
 
-Scoring depends on a ~19 MB model that can fail to load, so every scoring path
-runs through a single wrapper that catches failures. On error the app shows the
-real message, lists the session's ideas with a copy button, and offers a retry —
-it never strands you on a spinner with unrecoverable work.
+### Notes
 
-Retry does real work rather than repeating the same failure:
-
-- the worker is terminated and rebuilt, because the pipeline promise is
-  memoised and a rejected one would otherwise be replayed forever
-- the model files are re-fetched with `cache: 'reload'`, which repairs a browser
-  cache already poisoned by a previously cached error response
-
-The worker also asserts that the loaded pipeline actually has a tokenizer.
-transformers.js resolves the pipeline even when tokenizer loading failed, and
-without that check the problem only surfaces much later as an opaque
-`this.tokenizer is not a function`.
-
-### Prerequisites for a new host
-
-- A DNS record pointing `ideaworks.doom.fish` at the server. There is no
-  wildcard for `doom.fish`, so records are added per host.
-- The vhost uses `tls internal`, so browsers need Caddy's local root CA
-  (`/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt`) trusted,
-  or they will warn. Plain HTTP is also served and works fine.
+- `public/.nojekyll` stops Pages running the output through Jekyll, which would
+  otherwise drop files and directories beginning with an underscore.
+- The workflow copies `index.html` to `404.html`, because Pages has no SPA
+  rewrite and a deep link would otherwise 404 instead of loading the app.
+- Pages cannot serve precompressed `.zst` sidecars or set cache headers, so it
+  gzips on the fly. First load fetches ~5.8 MB of WebAssembly rather than the
+  3.7 MB a zstd-capable server would send. `scripts/deploy.sh` remains for
+  self-hosting behind Caddy, where those optimisations do apply.
 
 ---
 

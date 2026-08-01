@@ -29,12 +29,25 @@ jobs:
 
       - run: npm ci
 
-      # A project site is served from /<repo>/, not the domain root. Everything
-      # that builds a URL at runtime reads import.meta.env.BASE_URL, so setting
-      # this is enough — including the path the embedding model loads from.
+      # A project site is served from /<repo>/, but a *custom domain* serves from
+      # the root of that domain instead. Deriving this from the presence of a
+      # CNAME file means the two cannot drift apart: getting it wrong produces a
+      # site that loads but can never fetch its model, because the worker builds
+      # that path from import.meta.env.BASE_URL.
+      - name: Resolve base path
+        id: base
+        run: |
+          if [ -f public/CNAME ]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+            echo "Custom domain $(cat public/CNAME) — serving from root."
+          else
+            echo "path=/${{ github.event.repository.name }}/" >> "$GITHUB_OUTPUT"
+            echo "Project site — serving from /${{ github.event.repository.name }}/."
+          fi
+
       - name: Build
         env:
-          BASE_PATH: /${{ github.event.repository.name }}/
+          BASE_PATH: ${{ steps.base.outputs.path }}
         run: npm run build
 
       # GitHub Pages has no SPA rewrite, so an unknown path would 404 rather
