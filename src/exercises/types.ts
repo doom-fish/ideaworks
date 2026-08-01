@@ -64,6 +64,33 @@ export interface Phase {
    * kept in the record but must not be scored for originality against the task.
    */
   scored: boolean
+  /**
+   * A worked example of this phase, on a subject the user will never be given.
+   *
+   * Prose instructions describe the task; an example shows it, and for tasks
+   * this abstract that is the difference between understanding and guessing.
+   * The weak/strong pair matters more than the strong answer alone — nearly
+   * every misunderstanding here is a specific, predictable wrong move (giving
+   * a solution instead of a problem statement, copying an analogy's surface
+   * instead of its structure), and naming that move is what corrects it.
+   *
+   * The subject is deliberately never one of the live prompts. Exposure to an
+   * example makes people's own ideas resemble it — conformity to examples is
+   * one of the most robust findings in the ideation literature (Smith, Ward &
+   * Schumacher 1993), and this app's whole premise is that nothing should
+   * think on the user's behalf. Demonstrating on a foreign subject teaches the
+   * move without seeding the answer.
+   */
+  demo?: {
+    /** the unrelated subject the example is worked on */
+    subject: string
+    /** a typical answer that misses the point, and why */
+    weak?: string
+    weakWhy?: string
+    /** an answer that does the thing, and why it counts */
+    good: string
+    goodWhy: string
+  }
 }
 
 /** How the prompt itself is laid out, so each exercise reads as its own task. */

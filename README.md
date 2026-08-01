@@ -54,6 +54,30 @@ Jansson & Smith (1991, *Design Studies*) showed designers fixate on examples eve
 when explicitly instructed to be original. The cliché bank is therefore only
 revealed *after* you finish, never as a hint.
 
+There is one deliberate exception. These tasks are abstract enough that prose
+alone leaves people guessing — "write a different definition of the problem" only
+becomes clear once you have seen one definition that works next to one that
+quietly fails. So every phase carries a **worked example**, and every worked
+example is on a subject you will never be given.
+
+Each shows a weak answer beside a good one, because nearly every
+misunderstanding here is a specific predictable move: answering with a solution
+instead of a problem statement, copying an analogy's surface instead of its
+structure, sitting in the middle of an axis instead of at its end. Naming that
+move corrects it faster than any amount of explanation. The example opens by
+default on a phase you have not started and collapses once you are writing;
+Remote Associates keeps it closed, because there the example *is* a solved item.
+
+`npm run check-demos` enforces the "subject you will never be given" rule, and
+runs as part of `npm run build`. It is not decorative: the first draft violated
+it seven times out of twenty-two. The Remote Associates example was literally
+item one of the puzzle bank, and the Compare Two Cases example was one of its own
+prompts. It also checks the instructional copy, which was leaking answers
+independently of the examples — the Generic Parts hint illustrated itself with
+"wick" versus "twisted fibre string" while *a candle* sat in its own object bank,
+and Compare's empty state asked "what is the tumour of this problem?" while the
+army-and-tumour pair was one of its cases.
+
 ### Honest numbers
 
 On-device embedding scoring correlates with human originality ratings at roughly

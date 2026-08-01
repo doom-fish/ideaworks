@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run check-demos && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "calibrate": "node scripts/calibrate.mjs",
     "benchmark-models": "node scripts/benchmark-models.mjs",
-    "assess": "node scripts/assess-exercises.mjs"
+    "assess": "node scripts/assess-exercises.mjs",
+    "check-demos": "node scripts/check-demos.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.2.0",

@@ -16,6 +16,7 @@ import { CHAIN_GOOD, CHAIN_WEAK } from './engine/calibration'
 import { STRETCH_SEEDS } from './data/prompts'
 import type { PartGrade } from './data/genericParts'
 import { Button, Chip, Panel, categoryStyle } from './components/ui'
+import { WorkedExample } from './components/WorkedExample'
 import { IdeaRunner, type LiveIdea } from './components/IdeaRunner'
 import { ChainRunner, DatRunner, DecomposeRunner, RatRunner } from './components/Runners'
 import { SessionResult } from './components/SessionResult'
@@ -575,6 +576,9 @@ export default function App() {
                         setup for the next phase — not scored
                       </span>
                     )}
+                    <div>
+                      <WorkedExample phase={ph} />
+                    </div>
                   </div>
                 </li>
               ))}

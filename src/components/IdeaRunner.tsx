@@ -11,6 +11,7 @@ import {
 } from '../engine/calibration'
 import { fmtClock, useTimer } from '../lib/useTimer'
 import { Button, Chip, Panel, proseField, wordField } from './ui'
+import { WorkedExample } from './WorkedExample'
 import { Constellation, CoverageMeter, QuotaRing } from './LiveFeedback'
 
 export interface LiveIdea extends IdeaRecord {
@@ -244,6 +245,11 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
           {phase.hint && (
             <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>
           )}
+
+          {/* Opens itself for the phase you have not started yet: the moment of
+              "what do they actually want here" is before the first entry, not
+              after it. Once you are writing it collapses back out of the way. */}
+          <WorkedExample key={phase.label} phase={phase} defaultOpen={ideas.length === 0} />
 
           {/* Both cases stay on screen together: the comparison is the active
               ingredient, and showing them in sequence loses the effect. */}

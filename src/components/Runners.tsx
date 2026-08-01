@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Chip, Panel, proseField, wordField } from './ui'
+import { WorkedExample } from './WorkedExample'
 import { fmtClock, useTimer } from '../lib/useTimer'
 import { scoreChain } from '../engine/scoring'
 import { CHAIN_GOOD, CHAIN_WEAK } from '../engine/calibration'
@@ -58,6 +59,7 @@ export function DatRunner({
       <Panel className="p-5">
         <p className="text-lg font-medium leading-snug">{phase.task}</p>
         {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+        <WorkedExample phase={phase} defaultOpen={words.every((w) => !w.trim())} />
         <p className="mt-2 text-sm text-muted">
           Single common nouns only — no names, no jargon.
         </p>
@@ -227,6 +229,12 @@ export function RatRunner({
         )}
       </Panel>
       <p className="text-center text-[11px] leading-relaxed text-muted">{phase.hint}</p>
+      {/* Left closed here: this is a 30-second timed puzzle, and the example is
+          itself a solved item. Opening it by default would hand over the move
+          just as the clock starts. */}
+      <div className="flex justify-center">
+        <WorkedExample phase={phase} />
+      </div>
     </div>
   )
 }
@@ -294,6 +302,7 @@ export function DecomposeRunner({
       <Panel className="p-5">
         <p className="text-lg font-medium leading-snug">{phase.task}</p>
         {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+        <WorkedExample phase={phase} defaultOpen={parts.length === 0} />
         <div className="mt-4 rounded-xl border border-line bg-panel2/50 p-3">
           <div className="text-[10px] uppercase tracking-[.14em] text-muted">Object</div>
           <p className="mt-1 text-base text-fg">{prompt.label}</p>
@@ -439,6 +448,7 @@ export function ChainRunner({
       <Panel className="p-5">
         <p className="text-lg font-medium leading-snug">{phase.task}</p>
         {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+        <WorkedExample phase={phase} defaultOpen={steps.length === 0} />
       </Panel>
 
       <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-line bg-panel/40 p-4">
