@@ -196,9 +196,21 @@ function buildMetrics(
  * it is interpreted instead against reference distributions measured with this
  * exact model (see calibration.ts).
  */
+/**
+ * The word-level rules the DAT applies, exported because the runner has to draw
+ * them back at the user while they type — a box that reads as valid and is then
+ * silently dropped by the scorer corrupts the very trend line this exercise
+ * exists to produce. Two copies of a rule this small drift quietly, so there is
+ * one.
+ *
+ * Olson et al. exclude proper nouns, multi-word entries and repeats.
+ */
+export const DAT_TAKE = 7
+export const datValid = (word: string) => /^[a-z][a-z-]*$/.test(word.trim().toLowerCase())
+
 export async function scoreDAT(
   words: string[],
-  take = 7,
+  take = DAT_TAKE,
 ): Promise<{
   score: number
   band: DatBand
@@ -214,8 +226,7 @@ export async function scoreDAT(
   for (const w of words) {
     const t = w.trim().toLowerCase()
     if (!t) continue
-    // Olson et al. exclude proper nouns, multi-word entries and repeats.
-    if (!/^[a-z][a-z-]*$/.test(t) || seen.has(t)) {
+    if (!datValid(t) || seen.has(t)) {
       rejected.push(w.trim())
       continue
     }
