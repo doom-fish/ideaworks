@@ -459,7 +459,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Jump',
         task: 'Enter a word as unrelated as possible to the one before it.',
-        hint: 'Aim to keep every step above 0.80. Most people sag in the middle and start free associating.',
+        hint: 'Aim to keep every step above 0.70. Most people sag in the middle and start free associating.',
         placeholder: 'somewhere else entirely',
         verb: 'Jump',
         empty: '',
