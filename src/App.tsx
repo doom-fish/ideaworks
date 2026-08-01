@@ -58,6 +58,13 @@ export default function App() {
   const [craIdx, setCraIdx] = useState(0)
   const [craLog, setCraLog] = useState<{ item: CraItem; solved: boolean; ms: number }[]>([])
 
+  /**
+   * Fifteen exercises is past the point where a flat grid can be skimmed, and
+   * the thing you actually choose by is what you want to train — not the name,
+   * which gives away nothing until you already know the catalogue.
+   */
+  const [filter, setFilter] = useState<string>('all')
+
   const embedStatus = useSyncExternalStore(
     embedder.subscribe,
     () => `${embedder.status}:${Math.round(embedder.progress)}`,
@@ -692,16 +699,50 @@ export default function App() {
         </Panel>
 
         <div>
-          <h3 className="mb-3 text-sm font-medium text-muted">All exercises</h3>
+          {/* Category is the axis you actually choose along, so it is a filter
+              rather than decoration. Counts are shown because an empty-looking
+              filter is worse than no filter at all. */}
+          <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(
+              [
+                ['all', 'All', EXERCISES.length] as const,
+                ...[...new Set(EXERCISES.map((e) => e.category))].map(
+                  (c) => [c, c, EXERCISES.filter((e) => e.category === c).length] as const,
+                ),
+              ]
+            ).map(([key, label, count]) => {
+              const on = filter === key
+              const cat = categoryStyle(key)
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFilter(key)}
+                  aria-pressed={on}
+                  className={`press flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition-colors ${
+                    on
+                      ? key === 'all'
+                        ? 'border-accent/50 bg-accent/15 text-fg'
+                        : `${cat.border} ${cat.bg} ${cat.text}`
+                      : 'border-line bg-panel/60 text-muted hover:border-line hover:text-fg'
+                  }`}
+                >
+                  {key !== 'all' && <span className={`h-1.5 w-1.5 rounded-full ${cat.dot}`} />}
+                  {label}
+                  <span className="tabular-nums opacity-50">{count}</span>
+                </button>
+              )
+            })}
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {EXERCISES.map((ex) => {
+            {EXERCISES.filter((ex) => filter === 'all' || ex.category === filter).map((ex, i) => {
               const n = sessions.filter((s) => s.exerciseId === ex.id).length
               const cat = categoryStyle(ex.category)
               return (
                 <button
                   key={ex.id}
                   onClick={() => begin(ex)}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-panel/60 p-4 pl-5 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-panel2/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-0"
+                  style={{ ['--i' as string]: i }}
+                  className="group pop-in stagger relative flex h-full flex-col overflow-hidden rounded-2xl border border-line bg-panel/60 p-4 pl-5 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-panel2/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:translate-y-0"
                 >
                   {/* A colour spine per category: twelve identical cards are
                       impossible to skim, and category is what you choose by. */}
@@ -729,6 +770,13 @@ export default function App() {
                       {ex.category}
                     </span>
                     <span className="text-muted">{Math.round(ex.seconds / 60)} min</span>
+                    {/* Whether an exercise changes task partway through is the
+                        single biggest surprise in this catalogue, and knowing
+                        before you start is the difference between a deliberate
+                        switch and a confusing one. */}
+                    {ex.phases.length > 1 && (
+                      <span className="text-muted/70">{ex.phases.length} phases</span>
+                    )}
                   </div>
                 </button>
               )
@@ -771,11 +819,18 @@ function Shell({
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
-                  view === v ? 'bg-panel2 text-fg' : 'text-muted hover:text-fg'
+                aria-current={view === v ? 'page' : undefined}
+                className={`press relative rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                  view === v ? 'text-fg' : 'text-muted hover:text-fg'
                 }`}
               >
-                {label}
+                {/* The active pill sits behind the label rather than being a
+                    background on it, so the label colour and the indicator can
+                    transition independently. */}
+                {view === v && (
+                  <span aria-hidden className="pop-in absolute inset-0 rounded-lg bg-panel2" />
+                )}
+                <span className="relative">{label}</span>
               </button>
             ))}
           </nav>
