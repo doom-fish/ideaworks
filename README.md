@@ -1,6 +1,6 @@
 # Ideaworks
 
-**[Try it → 1313.github.io/ideaworks](https://1313.github.io/ideaworks/)**
+**[Try it → doom-fish.github.io/ideaworks](https://doom-fish.github.io/ideaworks/)**
 
 Training for divergent thinking and original idea generation. Every exercise
 traces to published research, all scoring runs on-device, and no AI ever
