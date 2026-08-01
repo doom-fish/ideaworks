@@ -1,0 +1,162 @@
+/*
+ * Shared motion vocabulary.
+ *
+ * Each exercise runner owns its own file so they can be worked on
+ * independently, which means none of them can safely add keyframes — they
+ * would all be editing this stylesheet at once. Everything a runner needs to
+ * feel physical lives here instead, and the runners only apply classes.
+ *
+ * Springs overshoot on purpose. A linear ease reads as a state change; an
+ * overshoot reads as an object arriving, and that is the difference between an
+ * interface that responds and one that feels like it has weight.
+ */
+
+/* Entrance: overshoots slightly, as a settling object does. */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.015) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+.pop-in {
+  animation: pop-in 0.34s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+/* Rejection. Short and tight — a long shake reads as breakage, not correction. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+.shake {
+  animation: shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* A value has changed and is worth a glance, without demanding one. */
+@keyframes tick {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.13);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.tick {
+  animation: tick 0.36s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+}
+
+/* Something crossed a threshold worth noticing. */
+@keyframes flare {
+  0% {
+    box-shadow: 0 0 0 0 rgb(20 224 165 / 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgb(20 224 165 / 0);
+  }
+}
+.flare {
+  animation: flare 0.7s ease-out both;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background-image: linear-gradient(
+    90deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.07) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Slow ambient drift, for anything that should feel alive while idle. */
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.float-y {
+  animation: float-y 3.6s ease-in-out infinite;
+}
+
+/*
+ * Stagger a list without giving every item its own class. Set --i on each
+ * child and entrances cascade instead of arriving as one block.
+ */
+.stagger {
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+/*
+ * Presses should feel like contact. Applied to anything tappable that is not
+ * already a Button.
+ */
+.press {
+  transition:
+    transform 0.12s cubic-bezier(0.22, 1.2, 0.36, 1),
+    filter 0.12s ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/*
+ * Vestibular disorders make large motion genuinely unpleasant, and this app is
+ * used under a running clock where that matters more than usual. Motion is
+ * removed rather than merely shortened; every animation here is decorative and
+ * nothing depends on it to convey state.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .pop-in,
+  .shake,
+  .tick,
+  .flare,
+  .shimmer,
+  .float-y,
+  .rise,
+  .pulsering {
+    animation: none !important;
+  }
+  .press:active {
+    transform: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}
