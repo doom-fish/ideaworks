@@ -3,19 +3,25 @@ import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { Button, Chip, Panel, wordField } from './ui'
 import { WorkedExample } from './WorkedExample'
 import { fmtClock, useTimer } from '../lib/useTimer'
+import { DAT_TAKE, datValid } from '../engine/scoring'
 import type { Phase } from '../exercises/types'
 
 /* ------------------------------------------------------------------ DAT --- */
 
 /*
  * Ten boxes, of which only the first seven valid words are scored. Both numbers
- * are properties of the published instrument (Olson et al. 2021), not tunables:
- * the scorer in engine/scoring.ts hard-codes `take = 7`, and the three spare
- * boxes exist so a proper noun or a typo need not cost you a scored slot. They
- * live here as named constants so this screen and the scorer cannot drift.
+ * are properties of the published instrument (Olson et al. 2021), not tunables,
+ * and the three spare boxes exist so a proper noun or a typo need not cost you a
+ * scored slot.
+ *
+ * The scored count and the word-validity rule are imported rather than restated
+ * here. They were restated once, and the copies disagreed — this screen accepted
+ * a leading hyphen the scorer rejects, so a box could read as counted and then
+ * be silently dropped. On an exercise taken monthly as a benchmark, a mark that
+ * disagrees with the score corrupts the trend it exists to measure.
  */
 const COUNT = 10
-const SCORED = 7
+const SCORED = DAT_TAKE
 
 /*
  * Each box is in exactly one of these states. `scored` and `extra` are both
@@ -40,7 +46,7 @@ function classify(words: string[]): Slot[] {
   return words.map((w) => {
     const t = w.trim().toLowerCase()
     if (!t) return 'empty'
-    if (!/^[a-z][a-z-]*$/.test(t)) return 'invalid'
+    if (!datValid(t)) return 'invalid'
     if (seen.has(t)) return 'duplicate'
     seen.add(t)
     valid += 1
