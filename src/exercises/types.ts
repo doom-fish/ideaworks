@@ -65,6 +65,21 @@ export interface Phase {
    */
   scored: boolean
   /**
+   * A sentence opening that stays visible above the field, so the answer is
+   * something you complete rather than something you are briefed about.
+   *
+   * This is where the instruction should live. A placeholder disappears the
+   * moment you type — exactly when the shape of the answer starts mattering —
+   * and a paragraph of hint above the box is read once and then scrolled past.
+   * "It could be used to…" sitting over the field does the work of the sentence
+   * explaining that we want a use and not an opinion, and it keeps doing it for
+   * the whole session.
+   *
+   * Absent for phases whose answer is a single word or a pair, where the shape
+   * of the input already says everything a stem could.
+   */
+  stem?: string
+  /**
    * This phase works from what the previous phase produced, so that output is
    * pinned in front of the input rather than left in the scrolling history.
    *

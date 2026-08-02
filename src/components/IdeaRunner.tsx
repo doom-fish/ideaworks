@@ -84,6 +84,12 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   // start writing, and any phase change re-opens it so a new task is never
   // missed.
   const [briefOpen, setBriefOpen] = useState(true)
+  /*
+   * The hint used to sit open under every task. With the sentence stem carrying
+   * the shape of the answer inside the field, it is a second opinion rather than
+   * the instruction, so it waits to be asked for.
+   */
+  const [hintOpen, setHintOpen] = useState(false)
   const startRef = useRef(Date.now())
   const idRef = useRef(0)
   const noticeTimer = useRef<number | undefined>(undefined)
@@ -176,6 +182,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
 
   useEffect(() => {
     setBriefOpen(true)
+    setHintOpen(false)
   }, [phaseIdx])
 
   useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
@@ -420,9 +427,10 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             onCommit={add}
             onAnimationEnd={() => setShakeField((s) => (s === 'text' ? null : s))}
             {...proseField}
-            placeholder={phase.placeholder}
+            stem={phase.stem}
+            placeholder={phase.stem ? '' : phase.placeholder}
             aria-label="Your entry"
-            className={`w-full sm:flex-1 border-line ${shakeField === 'text' ? 'shake' : ''}`}
+            className={`w-full border-line sm:flex-1 ${shakeField === 'text' ? 'shake' : ''}`}
           />
           <Button onClick={() => add()} disabled={!text.trim()} className="sm:mb-0.5">
             {phase.verb}
@@ -560,12 +568,20 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             onClick={() => setBriefOpen(false)}
             className="press flex w-full items-start gap-3 text-left"
           >
-            <p className="flex-1 text-base font-medium leading-snug text-fg sm:text-lg">
-              {phase.task}
-            </p>
+            <p className="flex-1 text-[15px] font-medium leading-snug text-fg">{phase.task}</p>
             <span className="mt-0.5 shrink-0 text-xs text-muted">hide</span>
           </button>
-          {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+          {phase.hint &&
+            (hintOpen ? (
+              <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>
+            ) : (
+              <button
+                onClick={() => setHintOpen(true)}
+                className="press mt-1.5 text-[12px] text-muted/80 underline decoration-dotted underline-offset-2 hover:text-fg"
+              >
+                What counts here?
+              </button>
+            ))}
 
           {/* Opens itself for the phase you have not started yet: the moment of
               "what do they actually want here" is before the first entry, and on
@@ -633,10 +649,14 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
 
       <div
         ref={listRef}
-        className="flex-1 space-y-1.5 rounded-2xl border border-line bg-panel/40 p-3"
+        className={`space-y-1.5 rounded-2xl border border-line bg-panel/40 p-3 ${
+          ideas.length > 0 ? 'flex-1' : ''
+        }`}
       >
         {ideas.length === 0 && phase.empty && (
-          <p className="p-6 text-center text-sm leading-relaxed text-muted">{phase.empty}</p>
+          <p className="px-3 py-4 text-center text-[13px] leading-relaxed text-muted/80">
+            {phase.empty}
+          </p>
         )}
         {/*
          * Grouped by phase where there is more than one, because a flat list

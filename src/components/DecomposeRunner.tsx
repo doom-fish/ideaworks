@@ -57,6 +57,7 @@ export function DecomposeRunner({
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [briefOpen, setBriefOpen] = useState(true)
+  const [hintOpen, setHintOpen] = useState(false)
   const [showHint, setShowHint] = useState(false)
 
   const start = useRef(Date.now())
@@ -278,6 +279,7 @@ export function DecomposeRunner({
             onChange={setText}
             onSubmit={addRoot}
             placeholder={phase.placeholder}
+            stem={phase.stem}
             inputRef={composeRef}
             autoFocus
           />
@@ -359,12 +361,20 @@ export function DecomposeRunner({
             onClick={() => setBriefOpen(false)}
             className="flex w-full items-start gap-3 text-left"
           >
-            <p className="flex-1 text-base font-medium leading-snug text-fg sm:text-lg">
-              {phase.task}
-            </p>
+            <p className="flex-1 text-[15px] font-medium leading-snug text-fg">{phase.task}</p>
             <span className="mt-0.5 shrink-0 text-xs text-muted">hide</span>
           </button>
-          {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+          {phase.hint &&
+            (hintOpen ? (
+              <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>
+            ) : (
+              <button
+                onClick={() => setHintOpen(true)}
+                className="press mt-1.5 text-[12px] text-muted/80 underline decoration-dotted underline-offset-2 hover:text-fg"
+              >
+                What counts here?
+              </button>
+            ))}
           {/* A starting aid: once a part exists you have the shape of the task
               and the example is only taking up room. */}
           {parts.length === 0 && <WorkedExample phase={phase} defaultOpen />}
@@ -505,6 +515,7 @@ function HighlightField({
   onCancel,
   onBlur,
   placeholder,
+  stem,
   inputRef,
   autoFocus,
 }: {
@@ -514,6 +525,7 @@ function HighlightField({
   onCancel?: () => void
   onBlur?: () => void
   placeholder: string
+  stem?: string
   inputRef?: RefObject<HTMLTextAreaElement | null>
   autoFocus?: boolean
 }) {
@@ -546,7 +558,11 @@ function HighlightField({
 
   return (
     <div>
-      <div className={`relative rounded-xl border bg-panel2 transition-colors ${border}`}>
+      <div className={`rounded-xl border bg-panel2 transition-colors ${border}`}>
+        {stem && (
+          <p className="select-none px-4 pt-2.5 text-[13px] leading-snug text-muted">{stem}</p>
+        )}
+        <div className="relative">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words px-4 py-3 leading-relaxed text-fg"
@@ -581,6 +597,7 @@ function HighlightField({
           enterKeyHint="done"
           className="relative block w-full resize-none appearance-none overflow-hidden border-0 bg-transparent px-4 py-3 leading-relaxed text-transparent caret-accent outline-none"
         />
+        </div>
       </div>
       {flagged && grade && (
         <p className="mt-1.5 px-1 text-[12px] leading-snug text-warn">

@@ -43,6 +43,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Uses',
         task: 'Name a use for this object that is not what it is for.',
+        stem: 'It could be used to…',
         hint: 'Anything goes as long as it uses something real about the object — its material, weight, shape, texture, how it fails.',
         placeholder: 'One use, then Enter…',
         verb: 'Add use',
@@ -187,6 +188,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Definitions',
         task: 'Write a different definition of what the real problem is.',
+        stem: 'The real problem is that…',
         hint: 'Not a solution. A problem statement. Each one should send you somewhere the last would not.',
         placeholder: 'The real problem is…',
         verb: 'Add definition',
@@ -238,6 +240,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Burn categories',
         task: 'Name a use, and the category it belongs to. Each category can be used once.',
+        stem: 'It could be used to…',
         hint: 'Label the category honestly. Once you name it, it is gone — that is what forces you somewhere new.',
         placeholder: 'One use, then Enter…',
         verb: 'Burn it',
@@ -292,6 +295,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Invent',
         task: 'Design something that solves this while obeying the constraint.',
+        stem: 'You could build…',
         hint: 'If your idea would work just as well without the constraint, you are not using it yet.',
         placeholder: 'One design, then Enter…',
         verb: 'Add design',
@@ -349,6 +353,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Abstract it',
         task: 'In one line, say how the source system works — as a relationship, not a description.',
+        stem: 'It works by…',
         hint: 'Strip the nouns. Not "a callus is hard skin" but "repeated stress makes the surface thicken exactly where it is hit".',
         placeholder: 'The underlying mechanism is…',
         verb: 'Set mechanism',
@@ -367,6 +372,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Carry it across',
         task: 'Now apply that mechanism to the challenge.',
+        stem: 'Here, that means…',
         buildsOnPrevious: true,
         hint: 'Map the relationship, not the surface. Nothing from the source domain should appear literally.',
         placeholder: 'One solution, then Enter…',
@@ -414,6 +420,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Decompose',
         task: 'Name one part, described only by shape and material.',
+        stem: 'One part is…',
         hint: 'If your word implies a use, it is doing your thinking for you. "Measuring edge" is a use; "straight strip of hard wood" is a form.',
         placeholder: 'shape and material only…',
         verb: 'Add part',
@@ -507,6 +514,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'As a marine biologist',
         task: 'Answer as a marine biologist would.',
+        stem: 'As a marine biologist:',
         hint: 'Borrow their vocabulary and what they would notice first, not just their opinion.',
         placeholder: 'As a marine biologist…',
         verb: 'Add',
@@ -525,6 +533,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'As a six-year-old',
         task: 'Now answer as a six-year-old would.',
+        stem: 'As a six-year-old:',
         hint: 'No jargon, no politeness, no knowledge of why things are done this way.',
         placeholder: 'As a six-year-old…',
         verb: 'Add',
@@ -543,6 +552,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'As a thief',
         task: 'Now answer as a thief would.',
+        stem: 'As a thief:',
         hint: 'Look for what is unguarded, mislabelled, or easier to take than to make.',
         placeholder: 'As a thief…',
         verb: 'Add',
@@ -595,6 +605,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Sabotage',
         task: 'How could you make this dramatically worse?',
+        stem: 'You could ruin it by…',
         hint: 'Be specific and be nasty about it. Vague sabotage inverts into vague advice.',
         placeholder: 'One way to ruin it, then Enter…',
         verb: 'Add failure',
@@ -613,6 +624,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Invert',
         task: 'Now flip each failure into something you would actually build.',
+        stem: 'So instead, you could…',
         hint: 'Not simply "do the opposite" — ask what would specifically prevent this failure.',
         placeholder: 'The fix for this one…',
         verb: 'Invert it',
@@ -664,6 +676,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Consequences',
         task: 'Name something that exists in this world that does not exist in ours.',
+        stem: 'In this world there is…',
         hint: 'Push past the first-order effect. Institutions, rituals, crimes and jobs are richer than gadgets.',
         placeholder: 'One consequence, then Enter…',
         verb: 'Add consequence',
@@ -708,6 +721,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Directions',
         task: 'Name three genuinely different directions you could take this.',
+        stem: 'You could change…',
         hint: 'Directions, not solutions. "Change who does it" is a direction; "add an app" is a solution.',
         placeholder: 'A direction you could take…',
         verb: 'Add direction',
@@ -726,6 +740,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Go deep',
         task: 'Pick the direction that interests you most and generate inside it.',
+        stem: 'Inside that direction…',
         buildsOnPrevious: true,
         hint: 'Ignore the other two now. Depth is the point of this phase — the breadth already happened.',
         placeholder: 'One idea inside that direction…',
@@ -789,6 +804,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Visit the extremes',
         task: 'Now write one design that sits at an extreme end of one of your axes.',
+        stem: 'At that extreme…',
         buildsOnPrevious: true,
         hint: 'Go all the way to the end of the axis. The interesting designs are at the edges, not the middle.',
         placeholder: 'A design at one extreme…',
@@ -835,6 +851,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Name the structure',
         task: 'In one line, state what the two cases above actually share.',
+        stem: 'Both work by…',
         hint: 'Not the topic. The relationship: what is the obstacle, and what shape is the fix in both?',
         placeholder: 'Both work by…',
         verb: 'Set structure',
@@ -853,6 +870,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Apply it',
         task: 'Now apply that structure to the new problem.',
+        stem: 'Here, that means…',
         buildsOnPrevious: true,
         hint: 'Ask what plays each role. If nothing in your answer maps to the structure, it is not using it.',
         placeholder: 'Applying that structure…',

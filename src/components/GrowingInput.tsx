@@ -19,6 +19,7 @@ export function GrowingInput({
   onChange,
   onCommit,
   inputRef,
+  stem,
   maxRows = 4,
   className = '',
   ...rest
@@ -27,6 +28,8 @@ export function GrowingInput({
   onChange: (v: string) => void
   onCommit: () => void
   inputRef?: Ref<HTMLTextAreaElement>
+  /** sentence opening kept above the field; see Phase.stem */
+  stem?: string
   maxRows?: number
   className?: string
 } & Omit<
@@ -56,7 +59,7 @@ export function GrowingInput({
     el.style.height = `${Math.min(el.scrollHeight, line * maxRows + padding) + border}px`
   }, [value, maxRows])
 
-  return (
+  const field = (
     <textarea
       ref={(node) => {
         own.current = node
@@ -72,8 +75,30 @@ export function GrowingInput({
           onCommit()
         }
       }}
-      className={`w-full resize-none rounded-xl border bg-panel2 px-4 py-3 text-sm leading-relaxed outline-none placeholder:text-muted/60 focus:border-accent ${className}`}
+      className={
+        stem
+          ? 'w-full resize-none bg-transparent px-3 pb-2.5 text-sm leading-relaxed outline-none placeholder:text-muted/50'
+          : `w-full resize-none rounded-xl border bg-panel2 px-4 py-3 text-sm leading-relaxed outline-none placeholder:text-muted/60 focus:border-accent ${className}`
+      }
       {...rest}
     />
+  )
+
+  if (!stem) return field
+
+  /*
+   * The stem is part of the field rather than a label beside it, so what you
+   * type reads as the completion of a sentence that is already underway. The
+   * border moves to the wrapper and focus is forwarded by focus-within, so the
+   * whole thing still behaves like one control.
+   */
+  return (
+    <div
+      className={`rounded-xl border bg-panel2 focus-within:border-accent ${className}`}
+      onClick={() => own.current?.focus()}
+    >
+      <p className="select-none px-3 pt-2.5 text-[13px] leading-snug text-muted">{stem}</p>
+      {field}
+    </div>
   )
 }

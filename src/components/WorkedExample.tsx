@@ -46,13 +46,9 @@ export function WorkedExample({
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-line bg-panel2/40">
-      <div className="flex items-start gap-3 border-b border-line/70 px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[.14em] text-muted">
-            Example · a different subject
-          </div>
-          <p className="mt-0.5 text-[12px] leading-snug text-fg/70">{demo.subject}</p>
-        </div>
+      <div className="flex items-baseline gap-2 border-b border-line/70 px-3 py-1.5">
+        <span className="text-[10px] uppercase tracking-[.14em] text-muted">Example</span>
+        <span className="min-w-0 flex-1 truncate text-[11px] text-muted/70">{demo.subject}</span>
         <button
           onClick={() => setOpen(false)}
           className="shrink-0 text-[11px] text-muted hover:text-fg"
@@ -61,23 +57,15 @@ export function WorkedExample({
         </button>
       </div>
 
-      <div className="space-y-2 p-3">
-        {demo.weak && (
-          <Row
-            tone="bad"
-            mark="✕"
-            answer={demo.weak}
-            why={demo.weakWhy ?? ''}
-            label="misses it"
-          />
-        )}
-        <Row tone="good" mark="✓" answer={demo.good} why={demo.goodWhy} label="counts" />
+      {/*
+       * The contrast is the lesson and reads in two lines; the reasoning behind
+       * it is worth a paragraph each but only once, and only if you want it. It
+       * used to be four paragraphs on screen before you had written anything.
+       */}
+      <div className="divide-y divide-line/50">
+        {demo.weak && <Row tone="bad" mark="✕" answer={demo.weak} why={demo.weakWhy ?? ''} />}
+        <Row tone="good" mark="✓" answer={demo.good} why={demo.goodWhy} />
       </div>
-
-      <p className="border-t border-line/70 px-3 py-2 text-[11px] leading-snug text-muted/80">
-        Deliberately not about your prompt — examples pull your own answers
-        towards them, so this one is somewhere you are not going.
-      </p>
     </div>
   )
 }
@@ -87,26 +75,29 @@ function Row({
   mark,
   answer,
   why,
-  label,
 }: {
   tone: 'good' | 'bad'
   mark: string
   answer: string
   why: string
-  label: string
 }) {
-  const c =
-    tone === 'good'
-      ? { border: 'border-accent2/30', bg: 'bg-accent2/5', text: 'text-accent2' }
-      : { border: 'border-danger/25', bg: 'bg-danger/5', text: 'text-danger' }
+  const [why_, setWhy] = useState(false)
+  const c = tone === 'good' ? 'text-accent2' : 'text-danger'
   return (
-    <div className={`rounded-lg border ${c.border} ${c.bg} p-2.5`}>
-      <div className="flex items-baseline gap-2">
-        <span className={`text-[13px] font-semibold ${c.text}`}>{mark}</span>
-        <p className="min-w-0 flex-1 text-[13px] leading-relaxed text-fg">{answer}</p>
-        <span className={`shrink-0 text-[10px] uppercase tracking-wider ${c.text}`}>{label}</span>
-      </div>
-      <p className="mt-1 pl-5 text-[12px] leading-relaxed text-muted">{why}</p>
-    </div>
+    <button
+      onClick={() => setWhy((v) => !v)}
+      className="flex w-full items-baseline gap-2 px-3 py-2 text-left"
+      aria-expanded={why_}
+    >
+      <span className={`text-[13px] font-semibold ${c}`}>{mark}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] leading-snug text-fg">{answer}</span>
+        {why_ ? (
+          <span className="mt-1 block text-[12px] leading-relaxed text-muted">{why}</span>
+        ) : (
+          <span className="mt-0.5 block text-[11px] text-muted/60">why?</span>
+        )}
+      </span>
+    </button>
   )
 }
