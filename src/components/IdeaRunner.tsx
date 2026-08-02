@@ -108,6 +108,11 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   const { remaining, progress } = useTimer(exercise.seconds, true, () => finishRef.current())
 
   const inPhase = useMemo(() => ideas.filter((i) => i.phase === phaseIdx), [ideas, phaseIdx])
+  /** What the previous phase produced, for phases that are built on it. */
+  const carried = useMemo(
+    () => ideas.filter((i) => i.phase === phaseIdx - 1).map((i) => i.text),
+    [ideas, phaseIdx],
+  )
 
   /** For a transform phase: the entries being inverted, in order. */
   const sources = useMemo(
@@ -152,6 +157,17 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   // field is the one that should be waiting for you.
   const leadsWithSecondField =
     (exercise.requiresCategory && phase.kind === 'generate') || / … /.test(phase.placeholder)
+
+  /*
+   * An axis is not a sentence, and typing "silent … deafening" into a prose box
+   * asks you to type the ellipsis yourself and hope you got the shape right.
+   * Dimension Mapper's first phase is the only place in the catalogue that wants
+   * a pair, and it announces itself in its own placeholder — "one end … the
+   * other end" — so the two halves get a field each with the ellipsis already
+   * standing between them.
+   */
+  const axisPhase = / … /.test(phase.placeholder)
+  const [axisLo, axisHi] = phase.placeholder.split(' … ')
 
   useEffect(() => {
     const primary = leadsWithSecondField ? categoryRef : inputRef
@@ -216,8 +232,21 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   }
 
   const add = () => {
-    const t = text.trim()
+    /*
+     * An axis is one answer written in two boxes, so it is rejoined here before
+     * anything else sees it. Storing only the right-hand field would record
+     * "deafening" where the user wrote "silent … deafening", and the next phase
+     * — which exists purely to travel to the end of an axis — would be handed a
+     * destination with no route to it.
+     */
+    const t = axisPhase
+      ? [category.trim(), text.trim()].filter(Boolean).join(' … ')
+      : text.trim()
     if (!t) return
+    if (axisPhase && (!category.trim() || !text.trim())) {
+      reject('text', 'An axis needs both ends.')
+      return
+    }
     // A repeat inside the current phase is almost always a stray second Enter or
     // a genuinely forgotten idea; either way it is wasted, so it bounces with a
     // reason. Transform phases are exempt: two different failures can honestly
@@ -289,17 +318,6 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
     ? String(prompt.data?.target ?? prompt.label)
     : prompt.label
 
-  /*
-   * An axis is not a sentence, and typing "silent … deafening" into a prose box
-   * asks you to type the ellipsis yourself and hope you got the shape right.
-   * Dimension Mapper's first phase is the only place in the catalogue that wants
-   * a pair, and it announces itself in its own placeholder — "one end … the
-   * other end" — so the two halves get a field each with the ellipsis already
-   * standing between them, and what you are being asked for stops needing
-   * explanation.
-   */
-  const axisPhase = leadsWithSecondField && / … /.test(phase.placeholder)
-  const [axisLo, axisHi] = phase.placeholder.split(' … ')
 
   const dockInput = transformDone ? (
     <Panel className="pop-in border-accent2/40 bg-accent2/5 p-3 text-sm text-accent2">
@@ -307,6 +325,11 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
     </Panel>
   ) : (
     <div className="flex flex-col gap-2">
+      {/* The previous phase's output is the instrument of this one, so it stays
+          in front of you rather than scrolling away with the history. */}
+      {phase.buildsOnPrevious && (
+        <CarryOver label={phases[phaseIdx - 1]?.label ?? 'From before'} items={carried} />
+      )}
       {/* Transform phases put the source in front of you rather than asking you
           to remember what you were supposed to be inverting, which means it
           belongs with the input and not up in the scrolling history. Keying it
@@ -615,15 +638,39 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
         {ideas.length === 0 && phase.empty && (
           <p className="p-6 text-center text-sm leading-relaxed text-muted">{phase.empty}</p>
         )}
-        {ideas.map((idea, i) => (
-          <IdeaRow
-            key={idea.id}
-            idea={idea}
-            index={i}
-            deletable={idea.phase === phaseIdx}
-            onDelete={() => remove(idea.id)}
-          />
-        ))}
+        {/*
+         * Grouped by phase where there is more than one, because a flat list
+         * misrepresents what several of these exercises are. Perspective Shift
+         * is scored on how far apart the three role-sets are, and running the
+         * marine biologist straight into the six-year-old hides the only
+         * structure that matters. Numbering restarts per group for the same
+         * reason: "the second thing I said as a thief" is the meaningful index,
+         * not "the eighth thing I said".
+         */}
+        {ideas.map((idea, i) => {
+          const startsGroup = phases.length > 1 && (i === 0 || ideas[i - 1].phase !== idea.phase)
+          const indexInPhase = ideas
+            .slice(0, i)
+            .filter((x) => x.phase === idea.phase).length
+          return (
+            <div key={idea.id}>
+              {startsGroup && (
+                <div className="flex items-center gap-2 px-1 pb-1 pt-2 first:pt-0">
+                  <span className="text-[10px] uppercase tracking-[.14em] text-muted">
+                    {phases[idea.phase]?.label ?? `Phase ${idea.phase + 1}`}
+                  </span>
+                  <span className="h-px flex-1 bg-line" aria-hidden />
+                </div>
+              )}
+              <IdeaRow
+                idea={idea}
+                index={phases.length > 1 ? indexInPhase : i}
+                deletable={idea.phase === phaseIdx}
+                onDelete={() => remove(idea.id)}
+              />
+            </div>
+          )
+        })}
       </div>
       </div>
     </RunnerShell>
@@ -676,6 +723,35 @@ function PhaseRail({ phases, phaseIdx, tone }: { phases: Phase[]; phaseIdx: numb
  * it is the failure you are undoing, and it counts down so the last one reads
  * as the last one rather than as just another card.
  */
+/**
+ * What the previous phase produced, kept in front of you while you work from it.
+ *
+ * A single line — an abstracted mechanism, a shared structure — is presented as
+ * the instrument it is. A set of them, like a list of axes or of directions, is
+ * a menu you are choosing from, so it stays a list rather than being flattened
+ * into prose.
+ */
+function CarryOver({ label, items }: { label: string; items: string[] }) {
+  if (items.length === 0) return null
+  return (
+    <Panel className="pop-in border-accent2/30 bg-accent2/5 p-3">
+      <div className="text-[10px] uppercase tracking-[.14em] text-accent2">{label}</div>
+      {items.length === 1 ? (
+        <p className="mt-1.5 text-[15px] leading-snug text-fg">“{items[0]}”</p>
+      ) : (
+        <ul className="mt-1.5 space-y-1">
+          {items.map((t, i) => (
+            <li key={i} className="flex gap-2 text-[14px] leading-snug text-fg">
+              <span className="shrink-0 text-accent2/70">{i + 1}</span>
+              <span className="min-w-0">{t}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
+  )
+}
+
 function SourceCard({
   label,
   index,

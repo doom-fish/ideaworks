@@ -65,6 +65,19 @@ export interface Phase {
    */
   scored: boolean
   /**
+   * This phase works from what the previous phase produced, so that output is
+   * pinned in front of the input rather than left in the scrolling history.
+   *
+   * Four phases in this catalogue open with a demonstrative — "apply *that*
+   * mechanism", "*that* structure", "one of *your* axes", "the direction that
+   * interests you" — and every one of them referred to something the user had
+   * written minutes earlier and could no longer see. The abstraction you wrote
+   * in phase one is the entire instrument of phase two; asking someone to carry
+   * it in their head while a clock runs is asking them to spend the exercise
+   * remembering instead of thinking.
+   */
+  buildsOnPrevious?: boolean
+  /**
    * A worked example of this phase, on a subject the user will never be given.
    *
    * Prose instructions describe the task; an example shows it, and for tasks

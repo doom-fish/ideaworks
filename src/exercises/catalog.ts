@@ -367,6 +367,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Carry it across',
         task: 'Now apply that mechanism to the challenge.',
+        buildsOnPrevious: true,
         hint: 'Map the relationship, not the surface. Nothing from the source domain should appear literally.',
         placeholder: 'One solution, then Enter…',
         verb: 'Add solution',
@@ -725,6 +726,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Go deep',
         task: 'Pick the direction that interests you most and generate inside it.',
+        buildsOnPrevious: true,
         hint: 'Ignore the other two now. Depth is the point of this phase — the breadth already happened.',
         placeholder: 'One idea inside that direction…',
         verb: 'Add idea',
@@ -787,6 +789,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Visit the extremes',
         task: 'Now write one design that sits at an extreme end of one of your axes.',
+        buildsOnPrevious: true,
         hint: 'Go all the way to the end of the axis. The interesting designs are at the edges, not the middle.',
         placeholder: 'A design at one extreme…',
         verb: 'Add design',
@@ -850,6 +853,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Apply it',
         task: 'Now apply that structure to the new problem.',
+        buildsOnPrevious: true,
         hint: 'Ask what plays each role. If nothing in your answer maps to the structure, it is not using it.',
         placeholder: 'Applying that structure…',
         verb: 'Add solution',
