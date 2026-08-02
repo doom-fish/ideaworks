@@ -428,7 +428,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             onAnimationEnd={() => setShakeField((s) => (s === 'text' ? null : s))}
             {...proseField}
             stem={phase.stem}
-            placeholder={phase.stem ? '' : phase.placeholder}
+            placeholder={phase.frame ?? (phase.stem ? '' : phase.placeholder)}
             aria-label="Your entry"
             className={`w-full border-line sm:flex-1 ${shakeField === 'text' ? 'shake' : ''}`}
           />
@@ -550,6 +550,29 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
           using, so the region reads as one continuous surface instead of a card
           floating above a gap. */}
       <div className="flex min-h-full flex-col gap-3">
+        {/*
+         * The two cases lead, ahead of the brief and the worked example.
+         * Comparing them is the active ingredient — it is the comparison itself
+         * that induces the schema — and they had ended up below a foreign
+         * example, so you met somebody else's analogy before the material you
+         * were being asked to work on, with the second case off the bottom of a
+         * phone screen entirely.
+         */}
+        {exercise.layout.twoCases && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(['caseA', 'caseB'] as const).map((k, n) => (
+              <div key={k} className="rounded-xl border border-accent2/25 bg-accent2/5 p-3">
+                <div className="text-[10px] uppercase tracking-[.14em] text-accent2">
+                  Case {n + 1}
+                </div>
+                <p className="mt-1 text-[13px] leading-relaxed text-fg/90">
+                  {String(prompt.data?.[k] ?? '')}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* The task, stated as an instruction — not a template blob. Re-mounting
             it per phase replays the entrance, which is what makes a phase change
             land as an arrival rather than a silent word-swap. */}
@@ -592,22 +615,6 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
             <WorkedExample key={phase.label} phase={phase} defaultOpen />
           )}
 
-          {/* Both cases stay on screen together: the comparison is the active
-              ingredient, and showing them in sequence loses the effect. */}
-          {exercise.layout.twoCases && (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {(['caseA', 'caseB'] as const).map((k, n) => (
-                <div key={k} className="rounded-xl border border-accent2/25 bg-accent2/5 p-3">
-                  <div className="text-[10px] uppercase tracking-[.14em] text-accent2">
-                    Case {n + 1}
-                  </div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-fg/90">
-                    {String(prompt.data?.[k] ?? '')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
         </Panel>
       ) : (
         /* Collapsed, this is a way back to the hint and the example — not a

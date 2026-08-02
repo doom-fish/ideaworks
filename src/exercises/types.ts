@@ -80,6 +80,21 @@ export interface Phase {
    */
   stem?: string
   /**
+   * The shape of a valid answer, shown inside the field only while it is empty.
+   *
+   * A stem tells you which sentence you are writing. On the abstraction phases
+   * that is not enough: "Both work by…" is a perfectly clear sentence and still
+   * leaves you staring at a blank line, because the hard part was never the
+   * grammar — it is knowing that a shared structure looks like "the direct route
+   * fails, so instead…" rather than like a summary of the two stories.
+   *
+   * It lives in the placeholder deliberately. The shape matters when you have
+   * nothing, and once you are typing you have already committed to one, so it
+   * gets out of the way instead of becoming another permanent line to read.
+   * Only the phases that ask for an abstraction carry one.
+   */
+  frame?: string
+  /**
    * This phase works from what the previous phase produced, so that output is
    * pinned in front of the input rather than left in the scrolling history.
    *

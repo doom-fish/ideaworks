@@ -188,6 +188,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: 'Definitions',
         task: 'Write a different definition of what the real problem is.',
+        frame: 'not "we should do X" — "the situation is Y"',
         stem: 'The real problem is that…',
         hint: 'Not a solution. A problem statement. Each one should send you somewhere the last would not.',
         placeholder: 'The real problem is…',
@@ -353,6 +354,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Abstract it',
         task: 'In one line, say how the source system works — as a relationship, not a description.',
+        frame: 'what keeps happening → what it causes · no nouns from the source',
         stem: 'It works by…',
         hint: 'Strip the nouns. Not "a callus is hard skin" but "repeated stress makes the surface thicken exactly where it is hit".',
         placeholder: 'The underlying mechanism is…',
@@ -372,6 +374,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Carry it across',
         task: 'Now apply that mechanism to the challenge.',
+        frame: 'what here plays the role of what in the mechanism',
         stem: 'Here, that means…',
         buildsOnPrevious: true,
         hint: 'Map the relationship, not the surface. Nothing from the source domain should appear literally.',
@@ -721,6 +724,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Directions',
         task: 'Name three genuinely different directions you could take this.',
+        frame: 'a lever: who does it · when · why · what is traded · what disappears',
         stem: 'You could change…',
         hint: 'Directions, not solutions. "Change who does it" is a direction; "add an app" is a solution.',
         placeholder: 'A direction you could take…',
@@ -740,6 +744,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Go deep',
         task: 'Pick the direction that interests you most and generate inside it.',
+        frame: 'an idea that only makes sense inside that direction',
         stem: 'Inside that direction…',
         buildsOnPrevious: true,
         hint: 'Ignore the other two now. Depth is the point of this phase — the breadth already happened.',
@@ -804,6 +809,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Visit the extremes',
         task: 'Now write one design that sits at an extreme end of one of your axes.',
+        frame: 'all the way to one end — not the middle',
         stem: 'At that extreme…',
         buildsOnPrevious: true,
         hint: 'Go all the way to the end of the axis. The interesting designs are at the edges, not the middle.',
@@ -851,6 +857,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '1 · Name the structure',
         task: 'In one line, state what the two cases above actually share.',
+        frame: 'both avoid… by…',
         stem: 'Both work by…',
         hint: 'Not the topic. The relationship: what is the obstacle, and what shape is the fix in both?',
         placeholder: 'Both work by…',
@@ -870,6 +877,7 @@ export const EXERCISES: Exercise[] = [
       {
         label: '2 · Apply it',
         task: 'Now apply that structure to the new problem.',
+        frame: 'what here plays the role of what in the structure',
         stem: 'Here, that means…',
         buildsOnPrevious: true,
         hint: 'Ask what plays each role. If nothing in your answer maps to the structure, it is not using it.',

@@ -278,7 +278,7 @@ export function DecomposeRunner({
             value={text}
             onChange={setText}
             onSubmit={addRoot}
-            placeholder={phase.placeholder}
+            placeholder={phase.frame ?? phase.placeholder}
             stem={phase.stem}
             inputRef={composeRef}
             autoFocus
