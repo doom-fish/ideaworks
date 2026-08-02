@@ -13,6 +13,8 @@ import {
 import { fmtClock, useTimer } from '../lib/useTimer'
 import { Button, Chip, Panel, categoryStyle, proseField, wordField } from './ui'
 import { WorkedExample } from './WorkedExample'
+import { PromptBar, RunnerShell } from './RunnerShell'
+import { GrowingInput } from './GrowingInput'
 import { Constellation, CoverageMeter, QuotaRing } from './LiveFeedback'
 
 export interface LiveIdea extends IdeaRecord {
@@ -86,7 +88,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   const idRef = useRef(0)
   const noticeTimer = useRef<number | undefined>(undefined)
   const listRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null)
   const categoryRef = useRef<HTMLInputElement>(null)
 
   const phases = exercise.phases
@@ -146,10 +148,15 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
   // repeats, so it takes focus there; everywhere else the idea field does. A
   // new phase, or the next source in a transform, always lands you back in the
   // input rather than making you reach for it.
+  // The axis phase is a pair, and the pair reads left to right, so the left
+  // field is the one that should be waiting for you.
+  const leadsWithSecondField =
+    (exercise.requiresCategory && phase.kind === 'generate') || / … /.test(phase.placeholder)
+
   useEffect(() => {
-    const primary = exercise.requiresCategory && phase.kind === 'generate' ? categoryRef : inputRef
+    const primary = leadsWithSecondField ? categoryRef : inputRef
     primary.current?.focus()
-  }, [phaseIdx, transformIdx, exercise.requiresCategory, phase.kind])
+  }, [phaseIdx, transformIdx, leadsWithSecondField])
 
   useEffect(() => {
     setBriefOpen(true)
@@ -252,7 +259,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
     setNotice(null)
     // Correcting an entry should drop you straight back into writing rather than
     // leaving focus on a button that is about to disappear.
-    const primary = requiresCat ? categoryRef : inputRef
+    const primary = leadsWithSecondField ? categoryRef : inputRef
     primary.current?.focus()
   }
 
@@ -282,41 +289,240 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
     ? String(prompt.data?.target ?? prompt.label)
     : prompt.label
 
-  return (
-    <div className="mx-auto flex h-full max-w-3xl flex-col gap-3 p-3 sm:gap-4 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} aria-hidden />
-          <span className="truncate text-sm font-semibold text-fg">{exercise.name}</span>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          {exercise.quota && phase.scored ? (
-            <QuotaRing count={scoredCount} quota={exercise.quota} />
-          ) : null}
-          <span className={`font-mono text-lg tabular-nums ${lowTime ? 'text-warn' : 'text-muted'}`}>
-            {fmtClock(remaining)}
+  /*
+   * An axis is not a sentence, and typing "silent … deafening" into a prose box
+   * asks you to type the ellipsis yourself and hope you got the shape right.
+   * Dimension Mapper's first phase is the only place in the catalogue that wants
+   * a pair, and it announces itself in its own placeholder — "one end … the
+   * other end" — so the two halves get a field each with the ellipsis already
+   * standing between them, and what you are being asked for stops needing
+   * explanation.
+   */
+  const axisPhase = leadsWithSecondField && / … /.test(phase.placeholder)
+  const [axisLo, axisHi] = phase.placeholder.split(' … ')
+
+  const dockInput = transformDone ? (
+    <Panel className="pop-in border-accent2/40 bg-accent2/5 p-3 text-sm text-accent2">
+      Every one inverted. Finish when you are ready.
+    </Panel>
+  ) : (
+    <div className="flex flex-col gap-2">
+      {/* Transform phases put the source in front of you rather than asking you
+          to remember what you were supposed to be inverting, which means it
+          belongs with the input and not up in the scrolling history. Keying it
+          to the source id springs each new one in as you walk down the list. */}
+      {phase.kind === 'transform' && currentSource && (
+        <SourceCard
+          key={currentSource.id}
+          label={phase.sourceLabel ?? 'Source'}
+          index={transformIdx}
+          total={sources.length}
+          text={currentSource.text}
+        />
+      )}
+
+      {axisPhase ? (
+        <div className="flex items-center gap-2">
+          <input
+            ref={categoryRef}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                inputRef.current?.focus()
+              }
+            }}
+            {...wordField}
+            placeholder={axisLo}
+            aria-label="One end of the axis"
+            className="min-w-0 flex-1 rounded-xl border border-line bg-panel2 px-3 py-3 text-sm outline-none placeholder:text-muted/60 focus:border-accent"
+          />
+          <span aria-hidden className="shrink-0 text-muted">
+            …
           </span>
-          <Button variant="ghost" onClick={onQuit}>
-            Abandon
+          <input
+            ref={inputRef as React.Ref<HTMLInputElement>}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                add()
+              }
+            }}
+            {...wordField}
+            placeholder={axisHi}
+            aria-label="The other end of the axis"
+            className={`min-w-0 flex-1 rounded-xl border border-line bg-panel2 px-3 py-3 text-sm outline-none placeholder:text-muted/60 focus:border-accent ${
+              shakeField === 'text' ? 'shake' : ''
+            }`}
+          />
+          <Button onClick={() => add()} disabled={!text.trim() || !category.trim()}>
+            {phase.verb}
           </Button>
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          {requiresCat && (
+            <input
+              ref={categoryRef}
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value)
+                if (notice?.field === 'category') setNotice(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  inputRef.current?.focus()
+                }
+              }}
+              onAnimationEnd={() => setShakeField((s) => (s === 'category' ? null : s))}
+              {...wordField}
+              placeholder="category"
+              aria-label="Category"
+              className={`w-full shrink-0 rounded-xl border bg-panel2 px-3 py-3 text-sm outline-none placeholder:text-muted/60 focus:border-accent sm:w-40 ${
+                categoryClash ? 'border-danger/70' : 'border-line'
+              } ${shakeField === 'category' ? 'shake' : ''}`}
+            />
+          )}
+          <GrowingInput
+            inputRef={inputRef as React.Ref<HTMLTextAreaElement>}
+            value={text}
+            onChange={(v) => {
+              setText(v)
+              if (notice?.field === 'text') setNotice(null)
+            }}
+            onCommit={add}
+            onAnimationEnd={() => setShakeField((s) => (s === 'text' ? null : s))}
+            {...proseField}
+            placeholder={phase.placeholder}
+            aria-label="Your entry"
+            className={`w-full sm:flex-1 border-line ${shakeField === 'text' ? 'shake' : ''}`}
+          />
+          <Button onClick={() => add()} disabled={!text.trim()} className="sm:mb-0.5">
+            {phase.verb}
+          </Button>
+        </div>
+      )}
 
-      <div className="h-1 overflow-hidden rounded-full bg-panel2">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-200"
-          style={{ width: `${progress * 100}%` }}
+      {notice ? (
+        <p className="px-1 text-[12px] leading-snug text-danger">{notice.msg}</p>
+      ) : (
+        categoryClash && (
+          <p className="px-1 text-[12px] leading-snug text-danger">
+            Already burned — find one you have not used.
+          </p>
+        )
+      )}
+    </div>
+  )
+
+  const dockFooter = (
+    /* Advancing is an explicit act, so the change of stance actually lands. */
+    <div className="flex items-center justify-between gap-3">
+      <p className="min-w-0 flex-1 text-[11px] leading-snug text-muted">
+        {!isLastPhase
+          ? canAdvance
+            ? `Ready for “${phases[phaseIdx + 1].label}” when you are.`
+            : phase.kind === 'transform'
+              ? `${sources.length - transformIdx} left to invert.`
+              : `${phaseMin - inPhase.length} more before the next phase.`
+          : quotaMet
+            ? 'Quota met — keep going, your best idea is usually still ahead.'
+            : `${(exercise.quota ?? 0) - scoredCount} more before this session counts.`}
+      </p>
+      {!isLastPhase ? (
+        <Button onClick={advance} disabled={!canAdvance}>
+          Next · {phases[phaseIdx + 1].label}
+        </Button>
+      ) : (
+        <Button variant="soft" onClick={finish} disabled={scoredCount < 2}>
+          Finish &amp; score
+        </Button>
+      )}
+    </div>
+  )
+
+  return (
+    <RunnerShell
+      header={
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} aria-hidden />
+              <span className="truncate text-sm font-semibold text-fg">{exercise.name}</span>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {exercise.quota && phase.scored ? (
+                <QuotaRing count={scoredCount} quota={exercise.quota} />
+              ) : null}
+              <span
+                className={`font-mono text-lg tabular-nums ${lowTime ? 'text-warn' : 'text-muted'}`}
+              >
+                {fmtClock(remaining)}
+              </span>
+              <Button variant="ghost" onClick={onQuit}>
+                Abandon
+              </Button>
+            </div>
+          </div>
+
+          <div className="h-1 overflow-hidden rounded-full bg-panel2">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-200"
+              style={{ width: `${progress * 100}%` }}
+            />
+          </div>
+
+          {/* The stepper only exists when there is a sequence to move through,
+              which is itself a signal: a single-phase exercise stays visibly
+              simpler. */}
+          {phases.length > 1 && <PhaseRail phases={phases} phaseIdx={phaseIdx} tone={tone} />}
+        </>
+      }
+      prompt={
+        <PromptBar
+          label={exercise.layout.subjectLabel}
+          subject={subjectText}
+          extraLabel={exercise.layout.extraLabel}
+          extra={extra ?? undefined}
+          extraTone={exercise.layout.extraTone}
+          accent={tone.dot}
         />
-      </div>
-
-      {/* The stepper only exists when there is a sequence to move through, which
-          is itself a signal: a single-phase exercise stays visibly simpler. */}
-      {phases.length > 1 && <PhaseRail phases={phases} phaseIdx={phaseIdx} tone={tone} />}
-
-      {/* The task, stated as an instruction — not a template blob. Re-mounting it
-          per phase replays the entrance, which is what makes a phase change land
-          as an arrival rather than a silent word-swap. */}
-      {briefOpen ? (
+      }
+      dock={
+        <>
+          {/* The ban list is the whole spine of Category Burn, so it lives next
+              to the input as a running tally of what you have spent rather than
+              as a footnote. */}
+          {exercise.requiresCategory && bannedCategories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-[11px] uppercase tracking-[.1em] text-muted">burned</span>
+              {bannedCategories.map((c) => (
+                <span
+                  key={c}
+                  className="pop-in rounded-full border border-danger/30 bg-danger/10 px-2 py-0.5 text-[11px] text-danger line-through"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
+          {dockInput}
+          {dockFooter}
+        </>
+      }
+    >
+      {/* min-h-full lets the answer panel grow into the space the brief is not
+          using, so the region reads as one continuous surface instead of a card
+          floating above a gap. */}
+      <div className="flex min-h-full flex-col gap-3">
+        {/* The task, stated as an instruction — not a template blob. Re-mounting
+            it per phase replays the entrance, which is what makes a phase change
+            land as an arrival rather than a silent word-swap. */}
+        {briefOpen ? (
         <Panel key={phaseIdx} className="pop-in overflow-hidden p-4 sm:p-5">
           <div className={`-mx-4 -mt-4 mb-3 h-1.5 sm:-mx-5 sm:-mt-5 ${tone.dot}`} aria-hidden />
           {!phase.scored && (
@@ -343,7 +549,9 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
               a multi-phase exercise that moment recurs at the top of every phase,
               not only at the very start. Once you are writing the whole brief
               collapses and takes the example with it. */}
-          <WorkedExample key={phase.label} phase={phase} defaultOpen={inPhase.length === 0} />
+          {inPhase.length === 0 && (
+            <WorkedExample key={phase.label} phase={phase} defaultOpen />
+          )}
 
           {/* Both cases stay on screen together: the comparison is the active
               ingredient, and showing them in sequence loses the effect. */}
@@ -361,55 +569,18 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
               ))}
             </div>
           )}
-
-          <div className="mt-3 rounded-xl border border-line bg-panel2/50 p-3">
-            <div className="text-[10px] uppercase tracking-[.14em] text-muted">
-              {exercise.layout.subjectLabel}
-            </div>
-            <p className="mt-1 text-[15px] leading-relaxed text-fg">{subjectText}</p>
-          </div>
-
-          {extra ? (
-            <div
-              className={`mt-2 rounded-xl border p-3 ${
-                exercise.layout.extraTone === 'constraint'
-                  ? 'border-warn/40 bg-warn/10'
-                  : 'border-accent2/30 bg-accent2/10'
-              }`}
-            >
-              <div
-                className={`text-[10px] uppercase tracking-[.14em] ${
-                  exercise.layout.extraTone === 'constraint' ? 'text-warn' : 'text-accent2'
-                }`}
-              >
-                {exercise.layout.extraLabel}
-              </div>
-              <p className="mt-1 text-sm leading-relaxed text-fg/90">{extra}</p>
-            </div>
-          ) : null}
         </Panel>
       ) : (
+        /* Collapsed, this is a way back to the hint and the example — not a
+           reminder of the subject, which no longer goes anywhere. */
         <button
           onClick={() => setBriefOpen(true)}
-          className="press w-full rounded-xl border border-line bg-panel/60 px-3 py-2 text-left"
+          className="press flex w-full items-start gap-2 rounded-xl border border-line bg-panel/60 px-3 py-2 text-left"
         >
-          <div className="flex items-start gap-2">
-            <span className="min-w-0 flex-1 text-sm leading-snug text-fg line-clamp-2">
-              {subjectText}
-            </span>
-            <span className="mt-0.5 shrink-0 text-[11px] text-muted">task</span>
-          </div>
-          {/* The constraint or source stays on screen even when collapsed: it is
-              not context, it is part of the instruction. */}
-          {extra && (
-            <p
-              className={`mt-1 line-clamp-2 text-[11px] leading-snug ${
-                exercise.layout.extraTone === 'constraint' ? 'text-warn' : 'text-accent2'
-              }`}
-            >
-              {exercise.layout.extraLabel}: {extra}
-            </p>
-          )}
+          <span className="min-w-0 flex-1 text-sm leading-snug text-muted line-clamp-2">
+            {phase.task}
+          </span>
+          <span className="mt-0.5 shrink-0 text-[11px] text-muted/70">show</span>
         </button>
       )}
 
@@ -426,24 +597,8 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
         </div>
       )}
 
-      {/* Transform phases put the source in front of you rather than asking you
-          to remember what you were supposed to be inverting; keying it to the
-          source id springs each new one in as you walk down the list. */}
-      {phase.kind === 'transform' &&
-        (currentSource ? (
-          <SourceCard
-            key={currentSource.id}
-            label={phase.sourceLabel ?? 'Source'}
-            index={transformIdx}
-            total={sources.length}
-            text={currentSource.text}
-          />
-        ) : (
-          <Panel className="pop-in border-accent2/40 bg-accent2/5 p-3 text-sm text-accent2">
-            Every one inverted. Finish when you are ready.
-          </Panel>
-        ))}
-
+      {/* Live feedback belongs with the answers it describes, so it scrolls with
+          them rather than holding space above a list you are trying to read. */}
       {scoredVecs.length >= 2 && (
         <div className="space-y-2">
           <Constellation vectors={scoredVecs} flags={scoredFlags} />
@@ -455,7 +610,7 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
 
       <div
         ref={listRef}
-        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto rounded-2xl border border-line bg-panel/40 p-3"
+        className="flex-1 space-y-1.5 rounded-2xl border border-line bg-panel/40 p-3"
       >
         {ideas.length === 0 && phase.empty && (
           <p className="p-6 text-center text-sm leading-relaxed text-muted">{phase.empty}</p>
@@ -470,113 +625,11 @@ export function IdeaRunner({ exercise, prompt, onFinish, onQuit }: Props) {
           />
         ))}
       </div>
-
-      {/* The ban list is the whole spine of Category Burn, so it lives next to
-          the input as a running tally of what you have spent rather than as a
-          footnote. */}
-      {exercise.requiresCategory && bannedCategories.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] uppercase tracking-[.1em] text-muted">burned</span>
-          {bannedCategories.map((c) => (
-            <span
-              key={c}
-              className="pop-in rounded-full border border-danger/30 bg-danger/10 px-2 py-0.5 text-[11px] text-danger line-through"
-            >
-              {c}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {!transformDone && (
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {requiresCat && (
-              <input
-                ref={categoryRef}
-                value={category}
-                onChange={(e) => {
-                  setCategory(e.target.value)
-                  if (notice?.field === 'category') setNotice(null)
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    inputRef.current?.focus()
-                  }
-                }}
-                onAnimationEnd={() => setShakeField((s) => (s === 'category' ? null : s))}
-                {...wordField}
-                placeholder="category"
-                aria-label="Category"
-                className={`w-full rounded-xl border bg-panel2 px-3 py-3 text-sm outline-none placeholder:text-muted/60 focus:border-accent sm:w-40 ${
-                  categoryClash ? 'border-danger/70' : 'border-line'
-                } ${shakeField === 'category' ? 'shake' : ''}`}
-              />
-            )}
-            <input
-              ref={inputRef}
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value)
-                if (notice?.field === 'text') setNotice(null)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  add()
-                }
-              }}
-              onAnimationEnd={() => setShakeField((s) => (s === 'text' ? null : s))}
-              {...proseField}
-              placeholder={phase.placeholder}
-              aria-label="Your entry"
-              className={`flex-1 rounded-xl border border-line bg-panel2 px-4 py-3 text-sm outline-none placeholder:text-muted/60 focus:border-accent ${
-                shakeField === 'text' ? 'shake' : ''
-              }`}
-            />
-            <Button onClick={() => add()} disabled={!text.trim()}>
-              {phase.verb}
-            </Button>
-          </div>
-          {notice ? (
-            <p className="px-1 text-[12px] leading-snug text-danger">{notice.msg}</p>
-          ) : (
-            categoryClash && (
-              <p className="px-1 text-[12px] leading-snug text-danger">
-                Already burned — find one you have not used.
-              </p>
-            )
-          )}
-        </div>
-      )}
-
-      {/* Advancing is an explicit act, so the change of stance actually lands. */}
-      <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 text-[11px] leading-snug text-muted">
-          {!isLastPhase
-            ? canAdvance
-              ? `Ready for “${phases[phaseIdx + 1].label}” when you are.`
-              : phase.kind === 'transform'
-                ? `${sources.length - transformIdx} left to invert.`
-                : `${phaseMin - inPhase.length} more before the next phase.`
-            : quotaMet
-              ? 'Quota met — keep going, your best idea is usually still ahead.'
-              : `${(exercise.quota ?? 0) - scoredCount} more before this session counts.`}
-        </p>
-        {!isLastPhase ? (
-          <Button onClick={advance} disabled={!canAdvance}>
-            Next · {phases[phaseIdx + 1].label}
-          </Button>
-        ) : (
-          <Button variant="soft" onClick={finish} disabled={scoredCount < 2}>
-            Finish &amp; score
-          </Button>
-        )}
       </div>
-    </div>
+    </RunnerShell>
   )
 }
+
 
 /**
  * The phase stepper. Small on purpose — two or three dots and the name of where

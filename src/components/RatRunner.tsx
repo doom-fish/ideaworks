@@ -159,7 +159,7 @@ export function RatRunner({
   const numColor = critical ? 'text-danger' : urgent ? 'text-warn' : 'text-muted'
 
   return (
-    <div className="mx-auto flex h-full max-w-xl flex-col p-4 sm:p-6">
+    <div className="mx-auto flex h-[100dvh] max-w-xl flex-col p-4 sm:p-6">
       <div className="flex shrink-0 items-center justify-between gap-3 pb-4">
         <div className="flex items-center gap-2">
           <span className="hidden sm:inline">

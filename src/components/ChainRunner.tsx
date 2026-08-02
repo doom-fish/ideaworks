@@ -167,7 +167,7 @@ export function ChainRunner({
   const clockTone = remaining <= 10 ? 'text-danger' : lowTime ? 'text-warn' : 'text-muted'
 
   return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col gap-4 p-4 sm:p-6">
+    <div className="mx-auto flex h-[100dvh] max-w-2xl flex-col gap-4 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <Chip tone="accent">Semantic Stretch</Chip>

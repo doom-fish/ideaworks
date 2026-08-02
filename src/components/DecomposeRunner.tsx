@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Button, Chip, Panel, proseField } from './ui'
 import { WorkedExample } from './WorkedExample'
+import { PromptBar, RunnerShell } from './RunnerShell'
 import { fmtClock, useTimer } from '../lib/useTimer'
 import { gradePart, type PartGrade } from '../data/genericParts'
 import type { Phase, Prompt } from '../exercises/types'
@@ -268,100 +269,8 @@ export function DecomposeRunner({
     )
   }
 
-  return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col gap-3 p-3 sm:gap-4 sm:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <Chip tone="accent">Generic Parts</Chip>
-          {/* Remounting on the count flips the tick animation, so reaching a
-              new function-free part registers as a small physical event. */}
-          <span key={cleanCount} className="tick inline-flex">
-            <Chip tone={quotaMet ? 'good' : 'neutral'}>
-              {cleanCount}/{quota} function-free
-            </Chip>
-          </span>
-          {flaggedCount > 0 && <Chip tone="bad">{flaggedCount} to reword</Chip>}
-        </div>
-        <div className="flex items-center gap-3">
-          <span
-            className={`font-mono text-lg tabular-nums ${
-              remaining <= 10 ? 'text-danger' : remaining < 30 ? 'text-warn' : 'text-muted'
-            }`}
-          >
-            {fmtClock(remaining)}
-          </span>
-          <Button variant="ghost" onClick={onQuit}>
-            Abandon
-          </Button>
-        </div>
-      </div>
-
-      <div className="h-1 overflow-hidden rounded-full bg-panel2">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-200"
-          style={{ width: `${progress * 100}%` }}
-        />
-      </div>
-
-      {briefOpen ? (
-        <Panel className="p-4 sm:p-5">
-          <button
-            onClick={() => setBriefOpen(false)}
-            className="flex w-full items-start gap-3 text-left"
-          >
-            <p className="flex-1 text-base font-medium leading-snug text-fg sm:text-lg">
-              {phase.task}
-            </p>
-            <span className="mt-0.5 shrink-0 text-xs text-muted">hide</span>
-          </button>
-          {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
-          <WorkedExample phase={phase} defaultOpen={parts.length === 0} />
-          <div className="mt-3 rounded-xl border border-line bg-panel2/50 p-3">
-            <div className="text-[10px] uppercase tracking-[.14em] text-muted">Object</div>
-            <p className="mt-1 text-base text-fg">{prompt.label}</p>
-          </div>
-          {prompt.data?.hint ? (
-            showHint ? (
-              <p className="mt-3 rounded-lg border border-line bg-panel2/60 p-2 text-xs text-muted">
-                {prompt.data.hint as string}
-              </p>
-            ) : (
-              <button
-                onClick={() => setShowHint(true)}
-                className="mt-3 text-xs text-muted underline hover:text-fg"
-              >
-                show hint
-              </button>
-            )
-          ) : null}
-        </Panel>
-      ) : (
-        <button
-          onClick={() => setBriefOpen(true)}
-          className="flex w-full items-center gap-2 rounded-xl border border-line bg-panel/60 px-3 py-2 text-left"
-        >
-          <span className="text-[10px] uppercase tracking-[.14em] text-muted">Object</span>
-          <span className="min-w-0 flex-1 truncate text-sm text-fg">{prompt.label}</span>
-          <span className="shrink-0 text-[11px] text-muted">task</span>
-        </button>
-      )}
-
-      <div
-        ref={listRef}
-        className="min-h-0 flex-1 space-y-1.5 overflow-y-auto rounded-2xl border border-line bg-panel/40 p-3"
-      >
-        {total === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-            <span className="float-y text-2xl text-muted/50" aria-hidden>
-              ⌗
-            </span>
-            <p className="max-w-xs text-sm leading-relaxed text-muted">{phase.empty}</p>
-          </div>
-        ) : (
-          roots.map((p) => renderRow(p, 0))
-        )}
-      </div>
-
+  const dock = (
+    <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1">
           <HighlightField
@@ -399,7 +308,110 @@ export function DecomposeRunner({
           Finish &amp; score
         </Button>
       </div>
-    </div>
+    </>
+  )
+
+  return (
+    <RunnerShell
+      header={
+        <>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Chip tone="accent">Generic Parts</Chip>
+          {/* Remounting on the count flips the tick animation, so reaching a
+              new function-free part registers as a small physical event. */}
+          <span key={cleanCount} className="tick inline-flex">
+            <Chip tone={quotaMet ? 'good' : 'neutral'}>
+              {cleanCount}/{quota} function-free
+            </Chip>
+          </span>
+          {flaggedCount > 0 && <Chip tone="bad">{flaggedCount} to reword</Chip>}
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`font-mono text-lg tabular-nums ${
+              remaining <= 10 ? 'text-danger' : remaining < 30 ? 'text-warn' : 'text-muted'
+            }`}
+          >
+            {fmtClock(remaining)}
+          </span>
+          <Button variant="ghost" onClick={onQuit}>
+            Abandon
+          </Button>
+        </div>
+      </div>
+
+      <div className="h-1 overflow-hidden rounded-full bg-panel2">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-200"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
+        </>
+      }
+      prompt={<PromptBar label="Object" subject={prompt.label} accent="bg-warn" />}
+      dock={dock}
+    >
+      <div className="flex min-h-full flex-col gap-3">
+      {briefOpen ? (
+        <Panel className="p-4 sm:p-5">
+          <button
+            onClick={() => setBriefOpen(false)}
+            className="flex w-full items-start gap-3 text-left"
+          >
+            <p className="flex-1 text-base font-medium leading-snug text-fg sm:text-lg">
+              {phase.task}
+            </p>
+            <span className="mt-0.5 shrink-0 text-xs text-muted">hide</span>
+          </button>
+          {phase.hint && <p className="mt-2 text-sm leading-relaxed text-muted">{phase.hint}</p>}
+          {/* A starting aid: once a part exists you have the shape of the task
+              and the example is only taking up room. */}
+          {parts.length === 0 && <WorkedExample phase={phase} defaultOpen />}
+          {prompt.data?.hint ? (
+            showHint ? (
+              <p className="mt-3 rounded-lg border border-line bg-panel2/60 p-2 text-xs text-muted">
+                {prompt.data.hint as string}
+              </p>
+            ) : (
+              <button
+                onClick={() => setShowHint(true)}
+                className="mt-3 text-xs text-muted underline hover:text-fg"
+              >
+                show hint
+              </button>
+            )
+          ) : null}
+        </Panel>
+      ) : (
+        <button
+          onClick={() => setBriefOpen(true)}
+          className="press flex w-full items-start gap-2 rounded-xl border border-line bg-panel/60 px-3 py-2 text-left"
+        >
+          <span className="min-w-0 flex-1 text-sm leading-snug text-muted line-clamp-2">
+            {phase.task}
+          </span>
+          <span className="mt-0.5 shrink-0 text-[11px] text-muted/70">show</span>
+        </button>
+      )}
+
+      <div
+        ref={listRef}
+        className="flex-1 space-y-1.5 rounded-2xl border border-line bg-panel/40 p-3"
+      >
+        {total === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+            <span className="float-y text-2xl text-muted/50" aria-hidden>
+              ⌗
+            </span>
+            <p className="max-w-xs text-sm leading-relaxed text-muted">{phase.empty}</p>
+          </div>
+        ) : (
+          roots.map((p) => renderRow(p, 0))
+        )}
+      </div>
+      </div>
+    </RunnerShell>
   )
 }
 

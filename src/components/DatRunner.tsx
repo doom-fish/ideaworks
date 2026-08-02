@@ -204,7 +204,7 @@ export function DatRunner({
   })()
 
   return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col gap-3 p-4 sm:gap-4 sm:p-6">
+    <div className="mx-auto flex h-[100dvh] max-w-2xl flex-col gap-3 p-4 sm:gap-4 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <Chip tone="accent">Divergent Association</Chip>
         <div className="flex items-center gap-3">
